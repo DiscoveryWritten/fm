@@ -132,6 +132,8 @@ function amendNPC(target, {}) {
     const parsed = Actions[key].parse(target, original);
     Object.assign(value, parsed);
   });
+
+  target.Harm = Actions.Harm.parse(target);
 }
 
 function amendDoor(target, { possesses }) {

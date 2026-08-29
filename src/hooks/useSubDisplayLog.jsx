@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 
 import { bufferize, bufferizeList, minifyNumbers } from '../utils';
 import useSave from './useSave';
+import useEventKeys from './useEventKeys';
 
 
 export default function useSubDisplayLog(enabled, {
@@ -35,30 +36,10 @@ export default function useSubDisplayLog(enabled, {
     });
   }, [log.length]);
 
-  useEffect(() => {
-    if (!enabled === null || text) return;
-    const keydown = (e) => {
-      switch (e.key) {
-        case keyMap.up:
-          setScrollOffset((offset) => (offset <= 0) ? 0 : offset - 1);
-          break;
-        case keyMap.down:
-          setScrollOffset((offset) => (offset >= log.length - 1) ? offset : (offset === null ? 0 : offset + 1));
-          break;
-        case keyMap.cancel:
-          setScrollOffset(null);
-          break;
-        case keyMap.select:
-          setScrollOffset((offset) => {
-            setText(log[offset]);
-            return offset;
-          });
-          break;
-      }
-    }
-    window.addEventListener('keydown', keydown);
-    return () => window.removeEventListener('keydown', keydown);
-  }, [enabled, log, text]);
+  // console.log('useSubDisplayLog');
+  useListKeys({
+    log, setScrollOffset, setText,
+  }, (enabled && !text) && keyMap);
 
   useEffect(() => {
     if (!enabled === null || !textViewport) return;
@@ -124,4 +105,22 @@ export default function useSubDisplayLog(enabled, {
   }, [enabled, textViewport, scrollBuffer, height, width, scrollSelectionBuffer]);
 
   return buffers;
+}
+
+function useListKeys({ log, setScrollOffset, setText }, keyMap) {
+  // console.log('useListKeys', keyMap);
+  const up = useCallback(() => {
+    setScrollOffset((offset) => (offset <= 0) ? 0 : offset - 1);
+  }, []);
+  const down = useCallback(() => {
+    setScrollOffset((offset) => (offset >= log.length - 1) ? offset : (offset === null ? 0 : offset + 1));
+  }, [log]);
+  const cancel = useCallback(() => {
+    setScrollOffset(null);
+  }, []);
+  const select = useCallback(() => {
+    setScrollOffset((offset) => { setText(log[offset]); return offset; });
+  }, [log]);
+
+  useEventKeys({ up, down, cancel, select }, keyMap);
 }
