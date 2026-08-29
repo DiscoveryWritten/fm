@@ -5,7 +5,7 @@ const IGNORE_VALUES = [undefined, null];
 export default function useSave({...vars}) {
   useEffect(() => {
     const saveHandler = (e) => {
-      const { slot=localStorage.getItem('latest') } = e.detail || {};
+      const { slot=localStorage.getItem('latest') || "Hero" } = e.detail || {};
       // console.log("* Saving", slot);
       localStorage.setItem('latest', slot);
       Object.entries(vars).forEach(([key, [value, _]]) => {
