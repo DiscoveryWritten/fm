@@ -85,15 +85,15 @@ React application:
 
 Still tweaking things but the working examples are the templates I expand.
 
-- [public/equipment/{kind}/{templateName}.txt](https://github.com/tiliv/fm/tree/main/public/equipment)
+- [games/fm/equipment/{kind}/{templateName}.txt](https://github.com/tiliv/fm/tree/main/games/fm/equipment)
   - Equipment templates only supply a weapon class and sprite.  Templates have no rarity, power, or value assigned until they are referenced in an inventory list that relates that information.
-- [public/interactions/{npcClass}/{npcId}.txt](https://github.com/tiliv/fm/tree/main/public/interactions)
+- [games/fm/interactions/{npcClass}/{npcId}.txt](https://github.com/tiliv/fm/tree/main/games/fm/interactions)
   - Interactions are usually NPCs, but in the game core, fancy coordinates with events attached become interactions too.  Interaction tiles become full text files here to get the full set of actions, like Buy/Sell, which have custom formats that don't fit in the #key=value schema available to pure map tiles.  For example, the `Fight` block allows for current hp thresholds to activate different movement strategies, `Buy` determines an inventory list, and `Sell` determines which categories of items you can sell to that NPC.
   - There is currently no net loss of currency when you buy an item and sell it back (if you can sell it back, that is).
   - Action block names that are prefixed by `?` incidate a reactive event, i.e., they catch YOUR event with that name and hijack the response.  This may put you into a conversation state with someone you have not bumped against for typical interactions.
-- [public/overlays/{overlayId}.txt](https://github.com/tiliv/fm/tree/main/public/overlays)
+- [games/fm/overlays/{overlayId}.txt](https://github.com/tiliv/fm/tree/main/games/fm/overlays)
   - Overlays can be referenced in world files, either as a global default, or at specific [r1, c1, r2, c2] rectangles, and with an offset animation sequence that loops forever.  The text files are just the full overlay art to be tiled and scrolled over the world display.  The world file supplies the colors and animation.
-- [public/world/{worldId}.txt](https://github.com/tiliv/fm/tree/main/public/world)
+- [games/fm/world/{worldId}.txt](https://github.com/tiliv/fm/tree/main/games/fm/world)
   - Worlds use a YAML-like multi-doc marker to separate the map art from the coordinate definitions.
   - Overlays are designated with their animation loop (if any), applicable area (or else implicitly global), color, and probability of triggering a different overlay as a replacement.  When overlay zones overlap, the most specific one should be last (i.e., global first, smallest last)
   - NPCs are baked into the static map art, and then that coordinate is used to associate an NPC data file containing its menu actions.
@@ -105,7 +105,7 @@ Still tweaking things but the working examples are the templates I expand.
   
 ### Developer docs
 
-See [docs/](docs/README.md) for the architecture, the exact grammar of every text file, the weather/zone internals, known issues, and deployment notes.
+See [docs/](docs/README.md) for the architecture, the exact grammar of every text file, how games are laid out (and can live in their own repos), testing, the weather/zone internals, known issues, and deployment notes.
 
 ## Who?
 

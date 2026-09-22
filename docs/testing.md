@@ -8,7 +8,7 @@ yarn test map      # only files or groups matching "map"
 
 The same checks also run **in the browser**, at `/tests/` on any deployed
 copy of the game (or `yarn dev` and open `/tests/`). That page loads the
-game's text files over the network, exactly as the game does, and runs every
+game's text files the way the game does, through `readText()`, and runs every
 portable check against them. After editing a world or NPC file on a phone,
 open `/tests/` to know it still holds together. `?grep=terra` narrows the run.
 
@@ -17,10 +17,12 @@ open `/tests/` to know it still holds together. `?grep=terra` narrows the run.
 - **Portable checks** (`src/checks/*.js`): these run both under Vitest and in
   the browser. Each module exports
   `register({ describe, it, expect }, content)` and must not use Node or the
-  DOM. `content` holds every game text file: `content.text[path]`,
+  DOM. `content` holds every file in the game: `content.text[path]`,
   `content.files`, `content.exists(path)`. The list of files comes from
-  `virtual:content-manifest`, which a Vite plugin builds from `public/`,
-  because a static host can't list its directories. Register a new module in
+  `virtual:content-manifest`, which a Vite plugin builds from the game's
+  folder, because a static host can't list its directories. Under Vitest the
+  files are read from that folder on disk. `GAME=<folder> yarn test` checks
+  another game (see [games.md](games.md)). Register a new module in
   `src/checks/index.js`.
 - **Vitest-only tests** (`*.test.js(x)`): anything that needs Node or a
   simulated DOM (jsdom), like the renderer and hook tests.
@@ -34,8 +36,9 @@ holds each of that runner's matchers to Vitest's verdicts.
 
 | File | What it pins down |
 | -- | -- |
-| `checks/files.js` | **Every shipped text file**: each world line parses, there's exactly one `---`, referenced overlay/NPC/world/equipment files exist, and coordinates are on the map |
-| `checks/map.js` | World parsing, walkability, viewport paging (including a page's last row and column), terrain layers, battle depth rows, and exploring on foot. On the real start world: it parses, the spawn is open ground, it's walled in, **every NPC and door can be reached from the spawn**, and locked rooms open only with their key |
+| `checks/files.js` | **Every file in the game**: `game.txt` parses and its start world exists; each world line parses, there's exactly one `---`, referenced overlay/NPC/world/equipment files exist, and coordinates are on the map |
+| `checks/game.js` | `game.txt` parsing, and content sources: the newest is asked first, falls through, and can be removed |
+| `checks/map.js` | World parsing, walkability, viewport paging (including a page's last row and column), terrain layers, battle depth rows, and exploring on foot. On the game's start world (from `game.txt`): it parses, the spawn is open ground, it's walled in, **every NPC and door can be reached from the spawn**, and locked rooms open only with their key |
 | `checks/zones.js` | Zone loading keeps declaration order however the fetches finish (the weather bug), last-declared-wins lookup, inclusive 1-based boxes, weather roll ranges |
 | `checks/interactions.js` | The object-spec grammar for every line type, NPC sections and `?reactions`, Buy filtering, locked doors, sprite actions |
 | `checks/buffers.js` | Offsets, placing, stacking and clipping, as plain text |
@@ -55,7 +58,7 @@ holds each of that runner's matchers to Vitest's verdicts.
   the fix in `src/zones.js`.
 - **Checking a screen without looking at it:** draw a view and compare
   `screenText(buffers, width, height)` with the lines you expect. See
-  `src/views/log.test.js`. `composite` also gives each cell's colors when
+  `src/checks/log.js`. `composite` also gives each cell's colors when
   they matter.
 - **Testing keys and state:** render the hook in a tiny component, dispatch
   `KeyboardEvent`s on `window` inside `act`, and read its buffers back as

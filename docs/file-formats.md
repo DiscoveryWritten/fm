@@ -1,7 +1,8 @@
 # Text file formats
 
-Everything under `public/` is fetched at runtime by relative URL. Editing a
-file and reloading is the whole authoring loop. `yarn test`, or `/tests/` in a browser, checks
+A game is a folder of text files (`games/fm/` today; see
+[games.md](games.md), which also covers `game.txt`). The engine reads them at
+runtime, so editing a file and reloading is the whole authoring loop. `yarn test`, or `/tests/` in a browser, checks
 every shipped file against the rules below.
 
 The grammars below are transcribed from the regexes in `src/interactions.js`
@@ -10,7 +11,7 @@ parser over the shipped files. **Coordinates are 1-based `(row,col)`**, which
 matches a text editor's cursor position. Map glyphs are counted per UTF-16
 code unit, so stick to BMP characters (the TI-83 font's glyphs all are).
 
-## `public/world/<World Name>.txt`
+## `world/<World Name>.txt`
 
 ```
 <map art, any number of rows>
@@ -114,13 +115,13 @@ dust.txt@v1^1:[19,37,23,44]#fg=8888
 
 A line that matches nothing is logged with `console.error` and skipped.
 
-## `public/overlays/<name>.txt`
+## `overlays/<name>.txt`
 
 This is raw tile art. Trailing blank lines are trimmed and lines may be
 ragged, because short lines are padded to the longest one. The world file
 supplies colour, area and motion.
 
-## `public/interactions/<Class>/<name>.txt`
+## `interactions/<Class>/<name>.txt`
 
 Sections separated by `---`. The first line of each section is its **name**,
 and the rest is its **text**. Each whole section is a JS template literal,
@@ -155,10 +156,10 @@ Every NPC also gets an invisible `Harm` entry. See known issues.
 | `rarity` | `0`–`4`, drawn grey, silver, green, yellow, magenta |
 | `stat` | Attack for `weapon`, defence for everything else |
 
-`public/equipment/examples.txt` is a catalog of lines in this format with a
+`equipment/examples.txt` is a catalog of lines in this format with a
 `$` prefix. It isn't loaded by anything.
 
-## `public/equipment/<kind>/<template>.txt`
+## `equipment/<kind>/<template>.txt`
 
 ```
 <rowOffset>:<glyphs>
@@ -178,7 +179,7 @@ in `useSubDisplayEquip.jsx`. The first non-blank glyph becomes the item's menu
 
 `none.txt` in each kind is the empty-slot sprite.
 
-## `public/world/debug.txt`
+## `world/debug.txt`
 
 This is the font glyph sheet. It's reachable in-game via the world door at
 `(22,36)` in Terra Montans, and it's shown in the Visualizer. It has no object
