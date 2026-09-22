@@ -54,8 +54,9 @@ scaled by CSS `zoom: magnification`.
 A **buffer** is `{ fg, bg?, buffer }`, where `buffer` is an array of rows.
 Each row is either a string or an array of single characters.
 
-- A blank cell (`''`, `null`, `undefined`, or the sentinel `ˣ`) is transparent,
-  so lower layers show through.
+- A blank cell (`''`, `null`, or `undefined`) is transparent, so lower layers
+  show through. `ˣ` is also listed as blank, but only for the background: the
+  glyph itself still draws. Nothing uses it yet.
 - A cell containing a space `' '` still paints its `bg`. That's how the menu
   draws inverted bars.
 - Later buffers draw on top of earlier ones.
@@ -147,8 +148,8 @@ Paging reaches them instead.
 - **Section 2: object specs.** Each line is classified by
   `classifyObjectSpec` in `src/interactions.js` into one of `sprite`, `zone`,
   `world`, `npc`, `door` or `obj`. See [file-formats.md](file-formats.md).
-- **Any further `---` section is ignored** (see
-  [known-issues.md](known-issues.md#high-canopy-overlay-never-loads)).
+- **Any further `---` section is ignored.** `src/content.test.js` fails on
+  one, so it can't slip into a shipped file.
 
 Outputs:
 
@@ -211,6 +212,8 @@ NPC along its `#idle=` direction list. Movement ignores walls and the player.
   - `text`: shown as scrollable wrapped text.
   - `consume`: removed from the list after use.
   - `price`: shown in the info bar and blocks use if you can't afford it.
+- An option's digit (or Shift+letter) selects it. Pressing it again while
+  it's selected uses it, like `Enter`.
 - `Enter` pushes, `Backspace` pops. Popping the root, or any auto-started
   menu, ends the interaction.
 - **Reactive `?Name` sections:** the ambient `Shout` and `Hide` dispatch
@@ -303,7 +306,7 @@ are still copied to `dist/` anyway.
 
 ## Tooling state
 
-- There are **no tests**.
+- Tests run with `yarn test` (Vitest). See [testing.md](testing.md).
 - `yarn lint` fails immediately because no ESLint config file exists in the
   repo.
 - `yarn build` works and emits one warning: the font `url()` in

@@ -146,6 +146,50 @@ export default function DisplayMenu({
     if (!options) {
       return;
     }
+    // Use the option at `selected` and return the next selection.  Runs inside
+    // a setSelected() updater; see the NOTE about double-firing below.
+    const useOption = (selected) => {
+      const option = options[selected] || {};
+      if (option?.price && gold + option.price < 0) return selected;
+      if (option.event) {
+        const event = new CustomEvent(
+          option.event,
+          { detail: option }
+        );
+
+        // NOTE: setTimeout, window.dispatchEvent, and setState(() => {})
+        // all trigger a double-firing bug because of the outer setState()
+        // function we're operating in.  To preserve the possibility of
+        // multiple events in a keypress, we'll allow the bug to damage
+        // the event queue, but they'll be filtered out in the useEffect()
+        // that dispatches them.  Debouncing does not work.  The bug only
+        // happens once when the optionsViewport changes, and only when
+        // this particular keypress is the first one handled afterward.
+        setEvents((events) => [...events, event]);
+
+        useKeyDownRef.current = false;
+
+        if (option.consume) {
+          setOptions((options) => {
+            return options.filter((o) => o !== option);
+          });
+        }
+
+        // Bail now if option was event-only
+        if (!option.items && !option.text) {
+          return selected;
+        }
+      }
+      setMenus((menus) => {
+        menus[menus.length - 1].selected = selected;
+        return [...menus, {
+          ...option,
+          title: `${OPTION_KEYS[selected]}:${option.name}`,
+        }];
+      });
+      return 0;
+    };
+
     const keyHandler = (e) => {
       switch (e.key) {
         case keyMap.down:
@@ -164,45 +208,7 @@ export default function DisplayMenu({
           if (useKeyDownRef.current || !options.length) return;
           setSelected((selected) => {
             useKeyDownRef.current = true;
-            const option = options[selected] || {};
-            if (option?.price && gold + option.price < 0) return selected;
-            if (option.event) {
-              const event = new CustomEvent(
-                option.event,
-                { detail: option }
-              );
-
-              // NOTE: setTimeout, window.dispatchEvent, and setState(() => {})
-              // all trigger a double-firing bug because of the outer setState()
-              // function we're operating in.  To preserve the possibility of
-              // multiple events in a keypress, we'll allow the bug to damage
-              // the event queue, but they'll be filtered out in the useEffect()
-              // that dispatches them.  Debouncing does not work.  The bug only
-              // happens once when the optionsViewport changes, and only when
-              // this particular keypress is the first one handled afterward.
-              setEvents((events) => [...events, event]);
-
-              useKeyDownRef.current = false;
-
-              if (option.consume) {
-                setOptions((options) => {
-                  return options.filter((o) => o !== option);
-                });
-              }
-
-              // Bail now if option was event-only
-              if (!option.items && !option.text) {
-                return selected;
-              }
-            }
-            setMenus((menus) => {
-              menus[menus.length - 1].selected = selected;
-              return [...menus, {
-                ...option,
-                title: `${OPTION_KEYS[selected]}:${option.name}`,
-              }];
-            });
-            return 0;
+            return useOption(selected);
           });
           break;
         default:
@@ -212,7 +218,11 @@ export default function DisplayMenu({
             if (number || (e.shiftKey && letter)) {
               const index = OPTION_KEYS.indexOf(e.key);
               if (index >= 0 && index < options.length) {
-                setSelected(index);
+                // An option's key selects it, and pressing it again uses it.
+                // Held-key repeats only select, so holding can't chain submenus.
+                setSelected((selected) => (
+                  selected === index && !e.repeat ? useOption(selected) : index
+                ));
               }
             }
           }
