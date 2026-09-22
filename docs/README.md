@@ -10,6 +10,7 @@ confirmed by running the app in a browser, it says so.
 | [file-formats.md](file-formats.md) | The exact grammar of every hand-edited text file under `public/`, including the gotchas the regexes impose |
 | [weather-zones.md](weather-zones.md) | How overlay zones are loaded, chosen, rolled and drawn, and why nesting order is not reliably honored |
 | [known-issues.md](known-issues.md) | Everything found broken or fragile, ranked, with evidence |
+| [testing.md](testing.md) | How to run the tests, what they cover, and how to use them when changing things |
 | [deployment.md](deployment.md) | What it takes to host the build on Cloudflare Pages and later cache it offline |
 
 ## One-screen mental model
