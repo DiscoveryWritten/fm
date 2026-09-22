@@ -31,8 +31,9 @@ export default function DisplayWorld({
   // This is redundant to the outer App.jsx useSave, because that one fails a
   // race condition to save data before it's unmounted and re-mounted. This one
   // saves data fine, but won't load anything, as the setters are no-op.
+  // Magnification is left to App, since on mobile this prop is a fitted value
+  // that shouldn't overwrite the saved desktop zoom.
   useSave({
-    magnification: [magnification, () => {}],
     width: [width, () => {}],
     height: [height, () => {}],
     startWorld: [startWorld, () => {}],

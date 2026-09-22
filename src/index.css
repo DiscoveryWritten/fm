@@ -115,3 +115,23 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+/* Mobile: the page becomes the calculator */
+.calculator.compact {
+  width: 100%;
+  max-width: none !important;
+  box-sizing: border-box;
+  padding: 8px 0 0;
+  background-color: #2b2b2b;
+  border-radius: 18px 18px 0 0;
+}
+.calculator.compact .displays > div {
+  display: flex;
+  justify-content: center;
+}
+.calculator.compact .displays > div[hidden] {
+  display: none;
+}
+.calculator.compact .hints {
+  display: none;
+}

@@ -83,6 +83,38 @@ on those rows are placed on the strip that matches their depth.
 `useLocation` computes these rows as `foreground`, `background1` and
 `background2`. Short sprites (`~` prefix) let farther walls show through.
 
+## Mobile: calculator mode
+
+Below 900 px wide (`COMPACT_QUERY` in `App.jsx`), the page becomes a
+calculator.
+
+- **One screen at a time.** Only one display is shown. The others stay
+  mounted, just `hidden`, so their state and key listeners keep running.
+- **Fitted zoom.** The shown screen is scaled to fit the window above the
+  keypad (`useFitMagnification`). That fitted value is never saved, so it
+  doesn't overwrite the desktop zoom.
+- **The keypad plays the keyboard.** `Keypad` dispatches the same
+  `keydown`/`keyup` events on `window` that a real keyboard would, using the
+  focused screen's keymap. The display components don't know it exists.
+
+| Button | STAT | WORLD | MENU |
+| -- | -- | -- | -- |
+| ▲ ▼ ◀ ▶ | `w s a d` | arrows | `k j`, and `-` / `=` for paging |
+| CLEAR | `Escape` | none | `Backspace` |
+| ENTER | Space | none | `Enter` |
+| 1–0 | digits (the menu uses them) | | |
+
+The d-pad repeats while held. The soft keys STAT / WORLD / MENU pick the focus.
+Focus also moves on its own:
+
+- **To MENU** when an `interaction` arrives that has something to pick.
+  Bumping a plain wall doesn't count.
+- **Back to WORLD** when the interaction ends, on `destination`, and on
+  `Fight`.
+
+Shift+letter menu shortcuts for options past the tenth have no button yet.
+Paging reaches them instead.
+
 ## World model
 
 `useWorld` fetches `world/<file>` and splits it on `---\n`:

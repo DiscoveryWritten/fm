@@ -1,0 +1,94 @@
+.keypad {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 8px calc(12px + env(safe-area-inset-bottom));
+  font-family: 'ti-83-plus-large';
+  background-color: #2b2b2b;
+  border-radius: 0 0 18px 18px;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.keypad .key {
+  font-family: inherit;
+  font-size: 18px;
+  color: #eee;
+  background-color: #4a4a4a;
+  border: none;
+  border-radius: 8px;
+  padding: 0;
+  min-height: 44px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  box-shadow: 0 3px 0 #111;
+}
+.keypad .key:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 #111;
+}
+.keypad .key:disabled {
+  opacity: 0.35;
+}
+
+/* Screen selectors sit right under the display, like Y= WINDOW ZOOM TRACE GRAPH */
+.keypad-screens {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.keypad .key.soft {
+  min-height: 32px;
+  font-size: 14px;
+  color: #222;
+  background-color: #c7c7c7;
+  border-radius: 4px;
+}
+.keypad .key.soft.active {
+  color: #c7c7c7;
+  background-color: #111;
+}
+
+.keypad-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.keypad-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+  max-width: 45%;
+}
+.keypad .key.enter {
+  background-color: #3a5a8c;
+}
+
+.keypad-dpad {
+  display: grid;
+  grid-template-columns: repeat(3, 48px);
+  grid-template-rows: repeat(3, 44px);
+  gap: 4px;
+}
+.keypad .key.arrow {
+  font-family: system-ui, sans-serif;
+  border-radius: 50%;
+  background-color: #5c5c5c;
+}
+.keypad .key.arrow.up { grid-area: 1 / 2; }
+.keypad .key.arrow.left { grid-area: 2 / 1; }
+.keypad .key.arrow.right { grid-area: 2 / 3; }
+.keypad .key.arrow.down { grid-area: 3 / 2; }
+
+.keypad-digits {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+.keypad .key.digit {
+  background-color: #1e1e1e;
+  min-height: 40px;
+}
