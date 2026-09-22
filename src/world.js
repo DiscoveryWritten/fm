@@ -14,6 +14,7 @@ const keyOf = (y, x) => `${y + 1},${x + 1}`;
 //   size:         [rows, cols]
 //   walls:        sprite glyph -> spec; any map cell with that glyph is solid
 //   interactions: "r,c" -> spec, with `sprite` taken from the map at r,c
+//                 (undefined when r,c is off the map)
 //   zoneSpecs:    overlay zone specs, in declaration order
 //   errors:       lines that didn't parse
 export function parseWorld(text) {
@@ -39,7 +40,7 @@ export function parseWorld(text) {
     interactions: Object.fromEntries(
       specs.filter((spec) => spec.coordinates).map((spec) => {
         const [r, c] = spec.coordinates;
-        spec.sprite = rows[r - 1][c - 1];
+        spec.sprite = rows[r - 1]?.[c - 1];
         return [`${r},${c}`, spec];
       })
     ),
@@ -62,10 +63,10 @@ export function viewport([y, x], [height, width]) {
   return { origin: [y - local[0], x - local[1]], local };
 }
 
-// Is the interaction at "r,c" on the page starting at `origin`?
+// Is the interaction at 1-based "r,c" on the page starting at 0-based `origin`?
 export function onPage(key, [originY, originX], [height, width]) {
-  const [y, x] = key.split(',').map(Number);
-  return !(x < originX || x >= originX + width || y < originY || y >= originY + height);
+  const [y, x] = key.split(',').map((n) => Number(n) - 1);
+  return y >= originY && y < originY + height && x >= originX && x < originX + width;
 }
 
 // The visible page of the map.

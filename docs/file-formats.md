@@ -1,7 +1,7 @@
 # Text file formats
 
 Everything under `public/` is fetched at runtime by relative URL. Editing a
-file and reloading is the whole authoring loop. `yarn test content` checks
+file and reloading is the whole authoring loop. `yarn test`, or `/tests/` in a browser, checks
 every shipped file against the rules below.
 
 The grammars below are transcribed from the regexes in `src/interactions.js`
@@ -19,7 +19,7 @@ code unit, so stick to BMP characters (the TI-83 font's glyphs all are).
 ```
 
 Only the **first** `---` split matters. The loader keeps `[map, objects]`
-and silently drops any third section (`yarn test content` flags one).
+and silently drops any third section (the checks flag one).
 
 Each spec line is tried against these patterns **in this order**, and the first
 match wins:

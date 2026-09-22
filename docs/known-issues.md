@@ -63,6 +63,12 @@ Movement only blocks known wall glyphs, and `map[y]?.[x]` outside the map is
 walks into negative or out-of-range coordinates, and viewport math goes
 negative. Terra Montans is fully walled, so it's safe.
 
+### Battle view: behind a short wall, every farther wall shows (verified)
+
+`depthRows` only consults the nearest wall in each column. When that's short
+(a counter), walls two rows back draw even if a tall wall between hides them.
+`src/checks/map.js` pins this as current behavior.
+
 ### NPC patrols ignore walls and the player (read)
 
 `idle` just replays the `#idle=` direction list. `tickArea` also mutates
@@ -87,6 +93,12 @@ interaction objects in place inside a state updater.
   `public/assets/` copies both exist. Moving the font next to `index.css`
   (or referencing `/ti-83-plus-large.ttf`) would let Vite fingerprint it and
   delete two copies.
+- **Fixed:** interactions on a page's last row or column (rows 8, 16, …,
+  cols 16, 32, …) were loaded for the next page, so they were invisible and
+  walkable on their own page. `onPage` compared 1-based keys with 0-based
+  bounds. None of today's maps had one there.
+- **Fixed:** an interaction coordinate off the map made the whole world fail
+  to load. It now loads, and `/tests/` reports the coordinate.
 - **Visualizer's viewport filter is a no-op** (read): it filters on
   `coordinate`, but the field is named `coordinates`.
 - **`DisplayMenu` target-change effect** keys on `` `${target?.coordinates}` ``

@@ -14,7 +14,7 @@
 4. `App` renders `DisplayStats`, `DisplayWorld` and `DisplayMenu` side by side,
    then the hidden `Visualizer` debug panel.
 
-Starting world and position are constants at the top of `App.jsx`:
+Starting world and position live in `src/start.js`:
 `Terra Montans.txt`, row 20, col 22 (1-based). Props subtract 1, because the
 engine works 0-based internally and the text files are 1-based.
 
@@ -158,7 +158,8 @@ Paging reaches them instead.
 
 ## World model
 
-`useWorld` fetches `world/<file>` and splits it on `---\n`:
+`useWorld` fetches `world/<file>`, and `parseWorld` in `src/world.js`
+splits it on `---\n`:
 
 - **Section 1: map art.** Each row becomes an array of characters.
 - **Section 2: object specs.** Each line is classified by
@@ -172,6 +173,11 @@ Outputs:
 - `walls`: sprite glyph → spec. Any map glyph listed here is solid.
 - `interactions`: `"r,c"` (1-based) → spec, with `sprite` filled in from the map glyph at that cell.
 - `zones`: one entry per overlay box (see weather doc).
+
+The rest of the map logic also lives in `src/world.js` as plain functions:
+`isOpen` (walk or bump), `viewport` and `onPage` (paging), `viewArea` and
+`terrain` (the visible layers), `depthRows` (battle view) and `explore`
+(what's reachable on foot). `src/checks/map.js` exercises them.
 
 `useLocation` then **hydrates** interactions: for every coordinate
 interaction inside the current page, and every wall sprite, it fetches the NPC
@@ -322,7 +328,9 @@ are still copied to `dist/` anyway.
 
 ## Tooling state
 
-- Tests run with `yarn test` (Vitest). See [testing.md](testing.md).
+- Tests run with `yarn test` (Vitest), and the portable ones also run in the
+  browser at `/tests/`, a second page in the build (`tests/index.html`). See
+  [testing.md](testing.md).
 - `yarn lint` fails immediately because no ESLint config file exists in the
   repo.
 - `yarn build` works and emits one warning: the font `url()` in

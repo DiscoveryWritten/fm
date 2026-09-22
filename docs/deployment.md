@@ -38,17 +38,22 @@ Things that matter:
 4. **Filenames with spaces** (`Terra Montans.txt`) are fetched URL-encoded
    (`%20`). Cloudflare serves them fine.
 
+## Self-test page
+
+The build has a second page, `dist/tests/index.html`, served at `/tests/`. It
+runs the portable checks against the deployed text files (see
+[testing.md](testing.md)). It's about 22 KB, and the game never loads it.
+
 ## Offline (service worker) groundwork
 
-There's no service worker or manifest yet. Notes for building one:
+There's no service worker yet. Notes for building one:
 
 - **Everything the game needs is static:** `index.html`, `assets/*`, and the
   text trees `world/`, `overlays/`, `interactions/`, `equipment/`, plus the
   font. None of these fetches carry credentials.
-- **Nothing lists those files.** The app discovers them by name from inside
-  other files. To precache, generate a list at build time by globbing
-  `dist/`, either with a Vite plugin (e.g. `vite-plugin-pwa` / Workbox
-  `globPatterns`) or a small post-build script.
+- **The file list exists:** `virtual:content-manifest` (a plugin in
+  `vite.config.js`) lists every game text file. The `/tests/` page already
+  uses it, and a service worker can precache from it.
 - **Sprite fetches add a query string:**
   `equipment/<kind>/<template>.txt?<slot>`, e.g. `?ring1a`. Match cache
   entries with `ignoreSearch: true`, or each slot becomes its own cache entry.
