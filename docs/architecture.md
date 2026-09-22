@@ -208,8 +208,8 @@ Keys written per slot: `magnification`, `width`, `height`, `startWorld`,
 because `App`'s copy lost a save-before-remount race (see its comment).
 
 Autoload depends on React having registered its `load` listeners before the
-browser fires `load`. **In the production build it doesn't:** see
-[known-issues.md](known-issues.md#saves-never-autoload-in-the-production-build).
+browser fires `load`. That's a timing race: see
+[known-issues.md](known-issues.md#save-autoload-is-a-timing-race-verified).
 
 ## Event catalog
 

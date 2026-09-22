@@ -13,18 +13,20 @@ Ranked by how much each one gets in the way of launching and playing.
 Vite copies all of `public/` into `dist/`. Nothing at runtime loads the model,
 because `useAnalyzer` is commented out. See [deployment.md](deployment.md).
 
-### Saves never autoload in the production build (verified)
+### Save autoload is a timing race (verified)
 
-`useSave` restores state from the browser's `load` event. In the built app,
-`load` fires **before** React runs the effects that register those listeners.
-The instrumented run logged `LOAD FIRED` first, and every listener
-registration saw `readyState === 'complete'`. A player with a save always
-starts fresh at the spawn point. In dev mode, module loading can shift the
-timing so it sometimes works, which would explain why this seemed fine during
-testing.
+`useSave` restores state from the browser's `load` event, so it only works if
+React has registered its listeners before the browser fires `load`. Whether
+that happens depends on how fast the page loads.
+
+- In a headless run of the production build, `load` fired **first** every
+  time: on the first visit, and on three reloads after saving. The player
+  spawned fresh each time.
+- In real use, the first visit tends to lose and a reload usually wins.
 
 Dispatching `window.dispatchEvent(new Event('load'))` by hand after mount does
-restore the save, which confirms the listeners themselves work.
+restore the save, which confirms the listeners themselves work. The fix is to
+restore once on mount instead of waiting for `load`.
 
 ## Gameplay bugs
 
@@ -41,7 +43,7 @@ item. `App` still listens for `Sheathe`, but nothing dispatches it, so after
 choosing **Fight** the world stays in battle view until you reload. Nothing
 breaks, because `battle` isn't saved.
 
-### Bard's `Load` menu is broken (verified data shape, read render)
+### Bard's `Load` menu is broken (verified in browser: shows `1:undefined`)
 
 `actions/Load.js` returns save-slot names as plain **strings**. The menu
 renders `option.name`, so it shows `1:undefined`. Choosing an entry pushes a
