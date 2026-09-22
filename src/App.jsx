@@ -70,7 +70,7 @@ export default function App({
   const [interaction, setInteraction] = useState(null);
   const [focus, setFocus] = useState('world');
   const compact = useMediaQuery(COMPACT_QUERY);
-  const [pinned, setPinned] = useState(null);
+  const [pinned, setPinned] = useState('stats');  // stats stay in view while you walk
   const calculatorRef = useRef(null);
   const mainSlotRef = useRef(null);
   const pinSlotRef = useRef(null);
