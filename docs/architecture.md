@@ -227,8 +227,11 @@ registers two listeners on `window`:
   `localStorage["<slot>/<key>"]` as JSON, and sets `localStorage.latest` to the
   slot. The slot comes from `event.detail.slot`, or `latest`, or `"Hero"`.
   Menu items never carry a `slot`, so in practice the slot is always `Hero`.
-- **`load`** (the browser's page-load event, lowercase): reads every key back
-  and calls its setter.
+- **`load`**: reads every key back and calls its setter. Each hook also
+  does this once when it mounts, if a save exists (`localStorage.latest` is
+  set), so a reload always resumes. It no longer depends on the browser's
+  page `load` event firing after React is ready. Dispatching `load` with
+  `detail.slot` restores that slot.
 
 Keys written per slot: `magnification`, `width`, `height`, `startWorld`,
 `startX`, `startY`, `x`, `y`, `zone`, `menuChoice`, `player/hp`,
@@ -238,10 +241,6 @@ Keys written per slot: `magnification`, `width`, `height`, `startWorld`,
 
 `DisplayWorld` has a second, write-only `useSave` for the same world keys,
 because `App`'s copy lost a save-before-remount race (see its comment).
-
-Autoload depends on React having registered its `load` listeners before the
-browser fires `load`. That's a timing race: see
-[known-issues.md](known-issues.md#save-autoload-is-a-timing-race-verified).
 
 ## Event catalog
 
