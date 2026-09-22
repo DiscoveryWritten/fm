@@ -14,7 +14,7 @@ export default function ScreenStack({
   return (
     <div>
       {hints && (
-        <div style={{fontSize: charHeight / 4}}>
+        <div className="hints" style={{fontSize: charHeight / 4}}>
           {hints}
         </div>
       )}

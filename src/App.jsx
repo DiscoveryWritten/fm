@@ -1,14 +1,17 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 import Visualizer from './Visualizer';
 import DisplayStats from './components/DisplayStats';
 import DisplayWorld from './components/DisplayWorld';
 import DisplayMenu from './components/DisplayMenu';
 import Analysis from './components/Analysis';
+import Keypad from './components/Keypad';
+import { FONT_WIDTH, FONT_HEIGHT } from './components/Screen';
 import useAnalyzer from './hooks/useAnalyzer';
 import useInventory from './hooks/useInventory';
 import useSave from './hooks/useSave';
 import useEvent from './hooks/useEvent';
+import useMediaQuery from './hooks/useMediaQuery';
 
 const START_WORLD = 'Terra Montans.txt'
 const [START_Y, START_X] = [20, 22];
@@ -42,6 +45,12 @@ const KEYMAP_MENU = {
   use: 'Enter',
   cancel: 'Backspace',
 };
+const KEYMAPS = { stats: KEYMAP_STATS, world: KEYMAP_WORLD, menu: KEYMAP_MENU };
+
+// Below this width the game becomes a calculator: one screen at a time, with an
+// on-screen keypad instead of a keyboard.
+const COMPACT_QUERY = '(max-width: 900px)';
+const COMPACT_GUTTER = 8;
 
 export default function App({
   startMagnification=2,
@@ -64,6 +73,13 @@ export default function App({
   const [battle, setBattle] = useState(null);
 
   const [interaction, setInteraction] = useState(null);
+  const [focus, setFocus] = useState('world');
+  const compact = useMediaQuery(COMPACT_QUERY);
+  const keypadRef = useRef(null);
+  const fitMagnification = useFitMagnification({
+    enabled: compact, width, height, reservedRef: keypadRef,
+  });
+  const displayMagnification = compact ? fitMagnification : magnification;
   const {
     stats,
     inventory, equipment, log,
@@ -82,6 +98,7 @@ export default function App({
   useEventInteraction({ setInteraction });
   useEventFight({ setBattle, setInteraction });
   useEventDestination({ startWorld, setStartWorld, setStartY, setStartX });
+  useEventFocus({ setFocus });
 
   // Set up world
   useEffect(() => {
@@ -97,6 +114,7 @@ export default function App({
 
   return (
     <>
+      {!compact && <>
       <h1>Make games with text files.</h1>
       <p>
         <label style={{ margin: '0 0 0 1em' }} htmlFor="magnification">Zoom: </label>
@@ -124,9 +142,11 @@ export default function App({
           style={{width: 50}}
         />
       </p>
+      </>}
 
-      <div style={{display: 'flex', flexDirection: 'column', alignItems: 'stretch', maxWidth: 'fit-content', margin: 'auto'}}>
-        <div style={{display: 'flex', flexDirection: 'row', justifyContent: 'center'}}>
+      <div className={compact ? 'calculator compact' : 'calculator'} style={{display: 'flex', flexDirection: 'column', alignItems: 'stretch', maxWidth: 'fit-content', margin: 'auto'}}>
+        <div className="displays" style={{display: 'flex', flexDirection: 'row', justifyContent: 'center'}}>
+          <div hidden={compact && focus !== 'stats'}>
           <DisplayStats
             {...stats.current}
             inventory={inventory}
@@ -136,9 +156,11 @@ export default function App({
 
             width={width}
             height={height}
-            magnification={magnification}
+            magnification={displayMagnification}
             keyMap={KEYMAP_STATS}
           />
+          </div>
+          <div hidden={compact && focus !== 'world'}>
           <DisplayWorld
             battle={battle}
             target={interaction}
@@ -150,9 +172,11 @@ export default function App({
             startY={startY}
             width={width}
             height={height}
-            magnification={magnification}
+            magnification={displayMagnification}
             keyMap={KEYMAP_WORLD}
           />
+          </div>
+          <div hidden={compact && focus !== 'menu'}>
           <DisplayMenu
             target={interaction}
             gold={stats.current.gold}
@@ -164,10 +188,16 @@ export default function App({
 
             width={width}
             height={height}
-            magnification={magnification}
+            magnification={displayMagnification}
             keyMap={KEYMAP_MENU}
           />
+          </div>
         </div>
+        {compact && (
+          <div ref={keypadRef}>
+            <Keypad focus={focus} setFocus={setFocus} keyMaps={KEYMAPS} />
+          </div>
+        )}
         <div hidden>
         {/* <div style={{display: 'flex', flexDirection: 'row'}}> */}
           <input
@@ -200,11 +230,11 @@ export default function App({
           ))
         )}
       </div> */}
-      <label><input
+      {!compact && <label><input
         type="checkbox"
         id="visualizer-toggle"
         onChange={e => document.getElementById('visualizer').hidden =! e.target.checked}
-      />Visualizer</label>
+      />Visualizer</label>}
       <div>
         <a href="https://github.com/tiliv/fm">GitHub</a> • <a href="https://ko-fi.com/discoverywritten#">Donate</a>
       </div>
@@ -252,4 +282,54 @@ function useEventDestination({ startWorld, setStartWorld, setStartY, setStartX }
     setStartX(c - 1);
   }, [startWorld]);
   useEvent('destination', destinationHandler);
+}
+
+
+// An interaction opens the menu only if it has something to pick; bumping a
+// plain wall shouldn't pull you out of the world.
+function hasMenuItems(interaction) {
+  return Boolean(interaction.start) || Object.values(interaction).some(
+    (value) => value?.name && !value.hidden
+  );
+}
+
+function useEventFocus({ setFocus }) {
+  const interactionHandler = useCallback(({ detail: interaction }) => {
+    if (interaction && hasMenuItems(interaction)) {
+      setFocus('menu');
+    } else if (!interaction) {
+      setFocus((focus) => focus === 'menu' ? 'world' : focus);
+    }
+  }, []);
+  useEvent('interaction', interactionHandler);
+
+  const worldHandler = useCallback(() => setFocus('world'), []);
+  useEvent('destination', worldHandler);
+  useEvent('Fight', worldHandler);
+}
+
+// Largest magnification (in 0.05 steps) that fits one screen plus the keypad
+// in the window.
+function useFitMagnification({ enabled, width, height, reservedRef }) {
+  const [fit, setFit] = useState(1);
+
+  useEffect(() => {
+    if (!enabled) return;
+    const update = () => {
+      const reserved = reservedRef.current?.offsetHeight || 0;
+      const byWidth = (window.innerWidth - 2 * COMPACT_GUTTER) / (width * FONT_WIDTH);
+      const byHeight = (window.innerHeight - reserved - 2 * COMPACT_GUTTER) / (height * FONT_HEIGHT);
+      setFit(Math.max(0.5, Math.floor(Math.min(byWidth, byHeight) * 20) / 20));
+    };
+    update();
+    window.addEventListener('resize', update);
+    const observer = new ResizeObserver(update);
+    if (reservedRef.current) observer.observe(reservedRef.current);
+    return () => {
+      window.removeEventListener('resize', update);
+      observer.disconnect();
+    };
+  }, [enabled, width, height]);
+
+  return fit;
 }
