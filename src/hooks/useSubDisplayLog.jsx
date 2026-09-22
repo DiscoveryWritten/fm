@@ -46,7 +46,7 @@ export default function useSubDisplayLog(enabled, {
   }, (enabled && !text) && keyMap);
 
   useEffect(() => {
-    if (!textRows) return;
+    if (!enabled || !textRows) return;
     const keydown = (e) => {
       switch (e.key) {
         case keyMap.up:

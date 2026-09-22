@@ -31,7 +31,7 @@ App
 ├─ DisplayStats  (status screen, WASD/Space/Esc)
 │   ├─ useSubDisplayEquip  -> useSpriteLayers + useDisplayEquipable   "Equip" tab (paper-doll)
 │   ├─ useSubDisplayRings  -> useSpriteLayers + useDisplayEquipable   "Rings" tab (8 ring slots)
-│   └─ useSubDisplayLog    -> useEventKeys                            "Log" tab
+│   └─ useSubDisplayLog    -> views/log (drawLog) + useEventKeys      "Log" tab
 │
 ├─ DisplayWorld  (world screen, arrows)
 │   ├─ useLocation
@@ -51,8 +51,9 @@ positioned `Screen`s layered on top of each other. A `Screen` is a
 `height × width` grid of `<span>`s, one per character cell, each 12×20 px
 scaled by CSS `zoom: magnification`.
 
-A **buffer** is `{ fg, bg?, buffer }`, where `buffer` is an array of rows.
-Each row is either a string or an array of single characters.
+A **buffer** is `{ fg, bg?, buffer, at? }` (see `src/buffers.js`). `buffer`
+is an array of rows, each a string or an array of single characters. `at` is
+the `[row, col]` of the buffer's top-left corner, `[0, 0]` by default.
 
 - A blank cell (`''`, `null`, or `undefined`) is transparent, so lower layers
   show through. `ˣ` is also listed as blank, but only for the background: the
@@ -60,6 +61,21 @@ Each row is either a string or an array of single characters.
 - A cell containing a space `' '` still paints its `bg`. That's how the menu
   draws inverted bars.
 - Later buffers draw on top of earlier ones.
+
+**Sized, placed buffers.** A buffer only has to be as big as what it draws,
+and `at` puts it on the screen. Older code still pads blank rows and cells to
+reach its position, and that keeps working. A **view** is a pure function
+that draws something in its own `width × height` and returns buffers.
+`place(buffers, [row, col])` then positions them anywhere. The Log is the
+first one: `src/views/log.js` draws it, and `useSubDisplayLog` keeps its
+state and keys and places it at row 4 of the STAT screen. The same view can
+be drawn at any size, anywhere.
+
+`composite(buffers, width, height)` works out what each cell shows without a
+DOM, and `screenText` turns that into lines of text. A test holds `composite`
+to the real renderer cell for cell. Translucent backgrounds, like the
+world's `#ccc7` dimmer, are the one thing it simplifies: it treats every
+background as opaque.
 
 This is how the TI-83 greyscale look is built: each colour is its own layer.
 For example, `DisplayWorld` stacks, bottom to top:
