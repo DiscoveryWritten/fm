@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 
-import { classifyObjectSpec, TYPES } from '../interactions';
 import { loadZones } from '../zones';
+import { parseWorld } from '../world';
 
 export default function useWorld({ world }) {
   const [walls, setWalls] = useState({});
@@ -15,39 +15,13 @@ export default function useWorld({ world }) {
       .then((res) => res.text())
       .then((text) => {
         window.dispatchEvent(new CustomEvent('world', { detail: text }));
-        const [loadedMap, objects] = text.trim().split('---\n');
-        const rows = loadedMap.trim().split('\n');
-        setMap(rows.map((row) => row.split('')));
-        const size = [rows.length, rows[0].length];
+        const { map, size, walls, interactions, zoneSpecs, errors } = parseWorld(text);
+        errors.forEach((e) => console.error(e));
+        setMap(map);
         setSize(size);
-
-        const lines = (objects || '').split('\n').map((line) => {
-          if (!line.length) return false;
-          try {
-            return classifyObjectSpec(line);
-          } catch (e) {
-            console.error(e);
-            return false;
-          }
-        }).filter(Boolean);
-
-        setWalls(Object.fromEntries(
-          lines
-            .filter(({ type }) => type === TYPES.SPRITE)
-            .map((data) => [data.sprite, data])
-        ));
-
-        const points = lines.filter((data) => data.coordinates);
-        const boxGroups = lines.filter((data) => data.boxes);
-        setInteractions(Object.fromEntries(
-          points.map((data) => {
-            const { coordinates: [r, c] } = data;
-            data.sprite = rows[r - 1][c - 1];
-            return [`${r},${c}`, data];
-          }
-        )));
-
-        return [size, boxGroups];
+        setWalls(walls);
+        setInteractions(interactions);
+        return [size, zoneSpecs];
       }).then(async ([size, boxGroups]) => {
         const zones = await loadZones(
           boxGroups,

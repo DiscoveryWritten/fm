@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 
 import useSave from './useSave';
 import { zoneAt, rollWeather } from '../zones';
+import { isOpen } from '../world';
 
 export default function usePosition({
   marker='Θ',
@@ -50,7 +51,7 @@ export default function usePosition({
         case keyMap.right: newX++; break;
         default: return;
       }
-      if (!walls[map[newY]?.[newX]] && !interactions[`${newY + 1},${newX + 1}`]) {
+      if (isOpen({ map, walls, interactions }, newY, newX)) {
         setX(newX);
         setY(newY);
         setBump(null);
