@@ -19,7 +19,7 @@ export default function ScreenStack({
         </div>
       )}
       <div style={{backgroundColor: gutter, width: w, height: h}}>
-        {buffers.map(({ bg=defaultBg, fg=defaultFg, buffer }, i) => (
+        {buffers.map(({ bg=defaultBg, fg=defaultFg, buffer, at }, i) => (
           <Screen
             key={i}
             width={width}
@@ -27,6 +27,7 @@ export default function ScreenStack({
             bg={bg}
             fg={fg}
             buffer={buffer}
+            at={at}
             magnification={magnification}
           />
         ))}

@@ -7,6 +7,7 @@ import { describe, it, expect } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import ScreenStack from './ScreenStack';
+import { composite } from '../buffers';
 
 const TRANSPARENT = ['', 'transparent', undefined];
 
@@ -94,9 +95,14 @@ describe('ScreenStack compositing', () => {
     expect(glyphs(cells)).toEqual(['ab']);
   });
 
-  it('positions partial buffers only by padding rows and cells (current behavior)', () => {
-    // There is no offset: to draw on row 2, col 1 a buffer carries two blank
-    // rows and a blank cell.  This is what sized, positioned buffers would replace.
+  it('places a buffer at its `at` offset', () => {
+    const cells = seen({ width: 3, height: 3, buffers: [
+      { fg: 'black', buffer: ['X'], at: [2, 1] },
+    ]});
+    expect(glyphs(cells)).toEqual(['...', '...', '.X.']);
+  });
+
+  it('still honors buffers padded into position the old way', () => {
     const cells = seen({ width: 3, height: 3, buffers: [
       { fg: 'black', buffer: ['', '', ['', 'X']] },
     ]});
@@ -108,5 +114,35 @@ describe('ScreenStack compositing', () => {
       { fg: 'black', bg: 'white', buffer: [['ˣ']] },
     ]});
     expect(cells[0][0]).toEqual({ glyph: 'ˣ', fg: 'black', bg: null });
+  });
+});
+
+// buffers.composite is the pure model tests use instead of rendering.  It has
+// to agree with the real renderer, cell for cell, or those tests mean nothing.
+describe('composite agrees with the renderer', () => {
+  const cases = {
+    'plain layers': [
+      { fg: 'gray', buffer: ['abcd', 'efgh', 'ijkl'] },
+      { fg: 'black', buffer: [['', 'X', null, 'Y']] },
+    ],
+    'offsets and backgrounds': [
+      { fg: 'gray', buffer: ['abcd', 'efgh', 'ijkl'] },
+      { fg: 'black', bg: 'white', buffer: ['Z ', ' Q'], at: [1, 1] },
+      { fg: 'red', buffer: ['!'], at: [2, 3] },
+    ],
+    'spaces with and without backgrounds': [
+      { fg: 'gray', buffer: ['abcd', 'efgh'] },
+      { fg: 'black', buffer: ['    '] },
+      { fg: 'black', bg: 'blue', buffer: ['', '  '], at: [0, 2] },
+    ],
+    'the ˣ sentinel': [
+      { fg: 'gray', buffer: ['ab'] },
+      { fg: 'black', bg: 'white', buffer: [['ˣ']] },
+    ],
+  };
+
+  it.each(Object.entries(cases))('%s', (_, buffers) => {
+    const [width, height] = [4, 3];
+    expect(composite(buffers, width, height)).toEqual(seen({ width, height, buffers }));
   });
 });
