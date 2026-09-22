@@ -12,7 +12,11 @@
 //   You've never been this tired before.
 //
 // Start is a world file and the 1-based (row,col) to spawn at.  Log lines are
-// the opening log, oldest first, one entry per line.
+// the opening log, oldest first, one entry per line.  Stats declares the
+// game's stats, one per line: code, name, color, and `gear` if it's summed
+// from what's worn (see src/stats.js).
+
+import { parseStats } from './stats';
 
 const START = /^(?<world>.+\.txt)\s*\((?<row>\d+),(?<col>\d+)\)$/;
 
@@ -33,5 +37,6 @@ export function parseGame(text) {
     world,
     start: [Number(row), Number(col)],
     log: [...(sections.Log || [])].reverse(),  // the game's log is newest first
+    stats: parseStats(sections.Stats),
   };
 }

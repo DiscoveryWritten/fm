@@ -2,6 +2,7 @@
 // authoring mistake fails here instead of silently vanishing in game.
 import { classifyObjectSpec, TYPES } from '../interactions';
 import { parseGame } from '../game';
+import { parseToken } from '../stats';
 
 // World files with no object section (pure art).
 const ART_ONLY = ['world/debug.txt'];
@@ -11,6 +12,12 @@ export default function register({ describe, it, expect }, content) {
     it('exists and names a start world and spawn point', () => {
       expect(content.exists('game.txt')).toBe(true);
       expect(() => parseGame(content.text['game.txt'])).not.toThrow();
+    });
+
+    it('declares each stat code and name once', () => {
+      const { stats } = parseGame(content.text['game.txt']);
+      const names = stats.flatMap(({ code, name }) => [code, name]);
+      expect(names.filter((n, i) => names.indexOf(n) !== i)).toEqual([]);
     });
 
     it('starts in a world file that exists', () => {
@@ -41,6 +48,14 @@ export default function register({ describe, it, expect }, content) {
     lines.forEach((line) => it(`parses: ${line}`, () => {
       expect(() => classifyObjectSpec(line)).not.toThrow();
     }));
+
+    it('uses only declared stats as bare #tokens', () => {
+      const { stats } = parseGame(content.text['game.txt']);
+      const undeclared = specs.flatMap((spec) => Object.entries(spec.attributes)
+        .filter(([key, value]) => value === undefined && !parseToken(key, stats))
+        .map(([key]) => `#${key} on ${spec.label || spec.sprite}`));
+      expect(undeclared).toEqual([]);
+    });
 
     it('points at files that exist', () => {
       const missing = specs.flatMap(({ type, label, dataFile }) => {

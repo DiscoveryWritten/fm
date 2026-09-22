@@ -48,7 +48,7 @@ rain.txt@v2:#fg=fff8#100-100=clouds.txt
 clouds.txt@^1>2:#fg=fff4#100-100=rain.txt
 dust.txt@v1^1:[19,37,23,44]#fg=8888
 (22,36)=(1,1):Debugger/debug.txt
-(21,42):Shopkeeper/jacynthe.txt
+(21,42):Shopkeeper/jacynthe.txt#H2
 (21,38):Bard/bard.txt#idle=v1>1^1<1
 (23,38)=(25,36):Room 1#key=Bat-shaped key#text=It's locked. You need a ${key} to get inside.
 (25,36)=(23,38):Tavern

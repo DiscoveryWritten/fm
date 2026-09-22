@@ -8,32 +8,15 @@ import { renderToStaticMarkup } from 'react-dom/server';
 
 import ScreenStack from './ScreenStack';
 import { composite } from '../buffers';
+import { readScreen } from '../testing/screen';
 
-const TRANSPARENT = ['', 'transparent', undefined];
-
-// Render a stack and read back, per cell, the glyph and colors on top.
-// Layers paint in DOM order; a cell with a background covers what's below it.
+// Render a stack statically and read back what each cell shows.
 function seen({ width, height, buffers, gutter='gutter' }) {
   const root = document.createElement('div');
   root.innerHTML = renderToStaticMarkup(
     <ScreenStack width={width} height={height} magnification={1} gutter={gutter} buffers={buffers} />
   );
-  const screens = [...root.querySelectorAll('.screen')];
-  return Array.from({ length: height }, (_, y) => Array.from({ length: width }, (_, x) => {
-    const cell = { glyph: null, fg: null, bg: null };
-    screens.forEach((screen) => {
-      const span = screen.querySelectorAll('.screen-row')[y].children[x];
-      const { color, backgroundColor } = span.style;
-      if (!TRANSPARENT.includes(backgroundColor)) {
-        Object.assign(cell, { glyph: null, fg: null, bg: backgroundColor });
-      }
-      const text = span.textContent;
-      if (!TRANSPARENT.includes(color) && text.trim() && text !== '&nbsp;') {
-        Object.assign(cell, { glyph: text, fg: color });
-      }
-    });
-    return cell;
-  }));
+  return readScreen(root);
 }
 
 const glyphs = (cells) => cells.map((row) => row.map((c) => c.glyph ?? '.').join(''));

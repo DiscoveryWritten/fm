@@ -123,6 +123,7 @@ toolbars can't push it around, and it respects the safe-area insets
 - **Soft keys** (STAT / WORLD / MENU): tap to focus that screen. Hold to pin
   or unpin it into the slot left of the pad. Tapping the pin slot focuses the
   pinned screen, which then moves up to the main slot until focus leaves it.
+  STAT starts pinned, so the stats show alongside the world from the start.
 - **Donut:** four arc buttons around a sunken **ENTER** well, with a small
   **CLR** at the 45° top-right.
 - **Digits** 1–0 are always sent as themselves.

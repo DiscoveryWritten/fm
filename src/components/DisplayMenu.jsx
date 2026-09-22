@@ -2,7 +2,9 @@ import { useState, useEffect, useRef } from 'react';
 
 import ScreenStack from './ScreenStack';
 import useSave from '../hooks/useSave';
-import { renderTemplate, minifyNumbers, bufferize, loadSprite, RARITY_COLORS } from '../utils';
+import { renderTemplate, minifyNumbers, loadSprite, RARITY_COLORS } from '../utils';
+import drawText, { layoutText } from '../views/text';
+import { markupChanges, statTokens } from '../stats';
 
 const OPTION_KEYS = '1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
@@ -11,6 +13,7 @@ export default function DisplayMenu({
   inventory,
   gold,
   ambientMenu,
+  stats=[],  // the game's declared stats, for marked-up text
 
   width, height, magnification=1,
   keyMap={
@@ -66,6 +69,7 @@ export default function DisplayMenu({
         ...autoAction,
       };
     }
+    setSelected(0);  // a new menu opens at the top, not where the last one was left
     setMenus([{
       title: `→${target.sprite} ${target.label}`,
       items,
@@ -77,7 +81,18 @@ export default function DisplayMenu({
   useEffect(() => {
     const { items=null, text=null, selected } = menus[menus.length - 1] || {};
     setOptions(typeof items === 'function' ? items({ inventory: _inventory.current }) : items);
-    setText(text ? renderTemplate(text, target?.attributes || {}) : text);
+    const rendered = text ? renderTemplate(text, target?.attributes || {}) : text;
+    setText(rendered);
+
+    // Text can change the stats of whoever says it (see useCharacterStats).
+    const changes = rendered && target ? markupChanges(rendered, stats) : [];
+    if (changes.length) {
+      window.dispatchEvent(new CustomEvent('Stats.change', { detail: {
+        character: target.name || target.label,
+        base: statTokens(target.attributes, stats),
+        changes,
+      }}));
+    }
     if (selected !== undefined) {
       setSelected(selected);
     }
@@ -117,8 +132,10 @@ export default function DisplayMenu({
       setTextViewport(null);
       return;
     }
-    setTextViewport(bufferize(menus.length, text, width, height, selected));
-  }, [menus.length, text, width, height, selected]);
+    setTextViewport(layoutText({
+      markup: text, stats, width, height, topMargin: menus.length, scroll: selected,
+    }));
+  }, [menus.length, text, width, height, selected, stats]);
 
   // Key handler for cancel
   useEffect(() => {
@@ -260,7 +277,7 @@ export default function DisplayMenu({
       setSelected((selected) => {
         const offset = selected + delta
         if (offset < 0) return 0;
-        if (delta > 0 && textViewport.length < height) return selected;
+        if (delta > 0 && textViewport.rows.length < height) return selected;
         return offset;
       });
     };
@@ -363,7 +380,7 @@ export default function DisplayMenu({
 
         ]},
         ...((menus.length && info) || []),
-        (menus.length && textViewport) && { fg: 'black', buffer: textViewport}
+        ...((menus.length && textViewport) ? drawText(textViewport, stats) : []),
       ].filter(Boolean)}
     />
   );

@@ -60,26 +60,37 @@ export function minifyNumbers(str) {
   return `${str}`.replace(/\d/g, (match) => MINI_NUMBERS[match]);
 }
 
-export function bufferize(topMargin, text, width, height, scrollOffset) {
-  const buffer = [];
-  const words = text.split(' ');
+// Word-wrap `text` to `width`: lines of { word, start }, where `start` is the
+// word's index in `text`.  A line holds as many words as fit with single
+// spaces between them.  (A first word wider than the line leaves an empty
+// line before it, which the menus have always shown.)
+export function wrapWords(text, width) {
+  const lines = [];
   let currentLine = [];
+  let lineLength = 0;  // the line's words joined with spaces
+  let start = 0;
 
-  words.forEach(word => {
-    if (currentLine.join(' ').length + word.length + 1 > width) {
-      buffer.push(currentLine);
+  text.split(' ').forEach((word) => {
+    if (lineLength + word.length + 1 > width) {
+      lines.push(currentLine);
       currentLine = [];
+      lineLength = 0;
     }
-    currentLine.push(word);
+    lineLength += currentLine.length ? word.length + 1 : word.length;
+    currentLine.push({ word, start });
+    start += word.length + 1;
   });
 
   if (currentLine.length > 0) {
-    buffer.push(currentLine);
+    lines.push(currentLine);
   }
+  return lines;
+}
 
-  const scrolledBuffer = buffer
+export function bufferize(topMargin, text, width, height, scrollOffset) {
+  const scrolledBuffer = wrapWords(text, width)
     .slice(scrollOffset, scrollOffset + height - topMargin)
-    .map(line => line.join(' '));
+    .map((line) => line.map(({ word }) => word).join(' '));
   scrolledBuffer.unshift(...Array(topMargin).fill(''));
   return scrolledBuffer;
 }

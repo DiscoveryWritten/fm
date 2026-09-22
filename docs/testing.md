@@ -44,8 +44,13 @@ holds each of that runner's matchers to Vitest's verdicts.
 | `checks/buffers.js` | Offsets, placing, stacking and clipping, as plain text |
 | `checks/log.js` | The Log view at its real size and at others: list, highlight, reading, text scroll, rewrapping |
 | `checks/utils.js` | Text wrapping and scrolling (`bufferize`), direction lists, prices, equipment grouping, templates |
+| `checks/stats.js` | The `Stats` section, stat tokens, and dialogue markup: where each kind of phrase ends, set/add/highlight-only, paragraphs |
+| `checks/text.js` | The menu's text view: wraps exactly like `bufferize` when nothing is marked, highlights exactly the phrase, two colors, scrolling, title rows |
 | `components/ScreenStack.test.jsx` | Vitest only. What the player sees when buffers stack, and that `composite` matches the real renderer cell for cell |
+| `components/DisplayMenu.test.jsx` | Vitest only. The real menu, driven by keys and read back off the screen: the ambient menu, a Shout reaction opening at its first line with `HEY!` highlighted, the stat change it reports, and a new menu opening at its first option |
 | `hooks/useSubDisplayLog.test.jsx` | Vitest only. The Log tab driven by key events, as the game drives it |
+| `hooks/useInteraction.test.jsx` | Vitest only. Bump targeting, and letting go when a bumped NPC walks away (this crashed the game) |
+| `hooks/useCharacterStats.test.jsx` | Vitest only. Stat changes from `Stats.change` events: first time only, map-line stats as the base, per character, saved with the game |
 
 ## How to use them
 
@@ -64,10 +69,25 @@ holds each of that runner's matchers to Vitest's verdicts.
   `KeyboardEvent`s on `window` inside `act`, and read its buffers back as
   text. See `src/hooks/useSubDisplayLog.test.jsx`. It caught the Log's
   reading keys staying live on other tabs.
+- **Testing a whole component:** render it, press keys, and read the DOM
+  back with `readScreen(element)` from `src/testing/screen.js`: each cell's
+  glyph and colors from the topmost layer that paints it, as the player sees
+  it. `screenLines(cells)` turns that into lines of text. Use an async `act`
+  when the component loads anything in the background (the menu's icons do).
+  See `src/components/DisplayMenu.test.jsx`.
 - **Refactoring a display:** before changing it, capture every layer of
   every cell in the browser across a script of key presses, then compare
   after. The Log's move to `src/views/log.js` matched across all 19
   captured states.
+
+## Test through the hooks
+
+This stays a plain React project: state lives in hooks, and hooks talk
+through `window` events (`Stats.change`, `Save`, `Ambient`, …). Tests should
+go through those same doors, dispatching the events a hook listens for and
+reading what it returns or draws, or else call the exact pure function the
+hook calls. A test that re-implements a hook's logic can pass while the game
+drifts away from it.
 
 ## Pulling logic out so it can be tested
 
@@ -79,6 +99,9 @@ hooks call:
   argument, so tests can pick the roll.
 - **`src/views/log.js`:** `drawLog` is pure, and `useSubDisplayLog` only
   holds state and keys.
+- **`src/views/text.js` and `src/stats.js`:** `DisplayMenu` lays out and
+  draws its text with `layoutText` and `drawText`, and finds the stat
+  changes with `markupChanges`. `useCharacterStats` only applies them.
 - **`src/world.js`:** `useWorld`, `useLocation` and `usePosition` call
   `parseWorld`, `isOpen`, `viewport`, `onPage`, `viewArea`, `terrain` and
   `depthRows`. `explore` is only used by checks today, and it's the start of

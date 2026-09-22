@@ -54,7 +54,7 @@ unfinished work from the salvaged stash.
 
 A world-door target must match `\w+\.txt`, and "High Canopy" has a space.
 (Its canopy overlay used to sit in an ignored third `---` section; that's
-fixed, and `src/content.test.js` now fails on any extra section.)
+fixed, and `src/checks/files.js` now fails on any extra section.)
 
 ### Player can walk off unwalled map edges (read)
 
@@ -97,6 +97,14 @@ interaction objects in place inside a state updater.
   cols 16, 32, …) were loaded for the next page, so they were invisible and
   walkable on their own page. `onPage` compared 1-based keys with 0-based
   bounds. None of today's maps had one there.
+- **Fixed:** bumping an NPC and then letting time pass (Wait, or loading a
+  save) could crash the whole game, blanking the page. When the NPC patrolled
+  away, `useInteraction` looked up an interaction for the now-empty cell.
+  `src/hooks/useInteraction.test.jsx` reproduces it.
+- **Fixed:** a newly opened menu kept the previous menu's selection. After
+  choosing Shout (option 2), the reaction opened scrolled past its first
+  line, and the next NPC's menu opened on its second item.
+  `src/components/DisplayMenu.test.jsx` reproduces both.
 - **Fixed:** an interaction coordinate off the map made the whole world fail
   to load. It now loads, and `/tests/` reports the coordinate.
 - **Visualizer's viewport filter is a no-op** (read): it filters on

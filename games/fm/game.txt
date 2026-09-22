@@ -7,3 +7,10 @@ Terra Montans.txt (20,22)
 Log
 You wake up in a small room, the walls are made of stone and the floor is dirt.
 You've never been this tired before.
+---
+Stats
+A  attack   f55  gear
+D  defense  58f  gear
+S  speed    8d8  gear
+H  hearing  fd4
+R  anger    f44

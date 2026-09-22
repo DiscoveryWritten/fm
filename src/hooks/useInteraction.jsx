@@ -32,8 +32,10 @@ export default function useInteraction({
       if (interaction) {
         foundInteraction = interaction;
       } else {
-        const sprite = layers.solid[lby][lbx];
-        if (interactions[sprite].short) {
+        // Nothing solid here means whatever was bumped has moved away (an NPC
+        // on patrol), so there's no longer a target.
+        const sprite = layers.solid[lby]?.[lbx];
+        if (sprite && interactions[sprite]?.short) {
           // Reach one space farther to see if something is on the other side.
           const xDiff = bx - x;
           const yDiff = by - y;
@@ -46,7 +48,7 @@ export default function useInteraction({
           }
         }
 
-        if (!foundInteraction) {
+        if (!foundInteraction && sprite) {
           foundInteraction = {
             sprite,
             coordinates: [by, bx],

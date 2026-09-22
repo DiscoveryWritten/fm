@@ -55,6 +55,11 @@ export default function register({ describe, it, expect }) {
         });
     });
 
+    it('reads bare #tokens (like the stat token #H2) as attributes with no value', () => {
+      expect(classifyObjectSpec('(21,42):Shopkeeper/jacynthe.txt#H2#R0#mood=sour').attributes)
+        .toEqual({ H2: undefined, R0: undefined, mood: 'sour' });
+    });
+
     it('rejects file names outside \\w+ (spaces, hyphens)', () => {
       expect(() => classifyObjectSpec('(1,1)=(2,2):Canopy/High Canopy.txt')).toThrow();
       expect(() => classifyObjectSpec('my-rain.txt@v1:#fg=fff')).toThrow();
@@ -100,6 +105,14 @@ export default function register({ describe, it, expect }) {
       // door's attributes when it's shown.
       expect(parseInteraction(door, '', { possesses: () => false }).Open)
         .toEqual({ name: 'Open', text: 'Need a ${key}.' });
+    });
+
+    it('never turns a bare token into an action', () => {
+      const bookcase = parseInteraction(classifyObjectSpec('(1,1):bookcase#H2#Read=Dusty.'), '', context);
+      expect(bookcase.Read).toEqual({ name: 'Read', text: 'Dusty.' });
+      expect(bookcase.H2).toBeUndefined();
+      const bed = parseInteraction(classifyObjectSpec('⌸:~bed#H2#Climb=Up.'), '', context);
+      expect(bed.H2).toBeUndefined();
     });
 
     it('turns capitalized sprite attributes into player actions', () => {

@@ -92,6 +92,15 @@ dust.txt@v1^1:[19,37,23,44]#fg=8888
 - The display name is `<file>` with its first letter capitalized.
 - `#idle=<directions>` gives a patrol loop. It's only used if the NPC has a
   `Fight` section.
+- **Stat tokens** set the character's starting stats: a declared stat's code
+  or full name, then a number, with no `=`. `#H2`, `#H2.1`, `#hearing3`.
+  Stats are declared in `game.txt` (see [games.md](games.md)); a token that
+  isn't a declared stat fails the checks, and a token never becomes a menu
+  action.
+
+```
+(21,42):Shopkeeper/jacynthe.txt#H2
+```
 
 ### 5. Door
 
@@ -142,6 +151,41 @@ evaluated with `new Function`, and the scope is:
 | `Fight` | Line 1: `hp:N,spd:N`. Line 2: `damage:strategy,…` breakpoints (e.g. `0:idle,1:attack,4:enrage`; a final `die` is added automatically). Remaining lines: the NPC's equipment. Only `idle` is implemented as a strategy. |
 
 Every NPC also gets an invisible `Harm` entry. See known issues.
+
+### Stat markup in dialogue
+
+Any section's text can mark a phrase with a stat. The phrase is drawn on the
+stat's color, like a highlighter, and the marker itself isn't shown.
+
+```
+"R+1:HEY! Will ye keep it down?"
+```
+
+A marker is a declared stat (code or full name), an optional number, and a
+colon, at the start of a word:
+
+| Marker | Effect |
+| -- | -- |
+| `R:` | Only highlights. |
+| `R1:` | Highlights, and sets the character's `R` to 1. |
+| `R+1:`, `R-2:` | Highlights, and adds to the character's `R`. |
+
+Where the phrase ends:
+
+- **ALL CAPS:** when the capitalized words run out. `R:VERY ANGRY now`
+  marks `VERY ANGRY`.
+- **A guard colon** before the sentence ends closes it, so a phrase can hold
+  commas: `H:sharp, clear ears: and more` marks `sharp, clear ears`.
+- **Otherwise** the next `.` `,` `!` `?` or `;` ends it.
+- **Two colons** (`R::`) mark the rest of the line.
+
+A change belongs to the character (all of their placements) and applies the
+**first time** its line is shown, so reading it again doesn't stack. Values
+are saved with the game.
+
+Single line breaks inside a section collapse into spaces, as in Markdown,
+and a blank line starts a new paragraph.
+
 
 ## Equipment lines (inside `Buy` and `Fight`)
 
