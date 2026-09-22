@@ -4,6 +4,7 @@ import usePosition from './usePosition';
 import useWorld from './useWorld';
 import { parseInteraction, TYPES } from '../interactions';
 import { parseDirectionsList } from '../utils';
+import { viewport, viewArea, terrain, depthRows, onPage } from '../world';
 import * as Strategies from '../strategies';
 
 export default function useLocation({
@@ -32,17 +33,15 @@ export default function useLocation({
   const [local, setLocal] = useState({ x: 0, y: 0 });
   const [origin, setOrigin] = useState({ x: 0, y: 0 });
 
-  const localX = posX % width;
-  const localY = posY % height;
-  const originX = posX - localX;
-  const originY = posY - localY;
+  const {
+    origin: [originY, originX],
+    local: [localY, localX],
+  } = viewport([posY, posX], [height, width]);
 
   // Determine 'area' from current viewport and do a deeper load of visible
   // interactions.
   useEffect(() => {
-    setArea(map.slice(originY, originY + height).map(
-      (row) => row.slice(originX, originX + width)
-    ));
+    setArea(viewArea(map, [originY, originX], [height, width]));
 
     const name = localStorage.getItem('latest');
 
@@ -50,11 +49,8 @@ export default function useLocation({
     Promise.all(
       Object.entries(interactions).concat(Object.entries(walls))
       .map(async ([key, interaction]) => {
-        if (key.includes(',')) {
-          const [y, x] = key.split(',').map(Number);
-          if ((x < originX || x >= originX + width) || (y < originY || y >= originY + height)) {
-            return [null, null];
-          }
+        if (key.includes(',') && !onPage(key, [originY, originX], [height, width])) {
+          return [null, null];
         }
         const attributes = interaction.attributes || {};
         const context = { ...attributes, name, possesses };
@@ -78,33 +74,15 @@ export default function useLocation({
 
   // Set 'solid' and 'passable' layers based on walls table
   useEffect(() => {
-    setSolid(area.map((row) => row.map((cell) => walls[cell] ? cell : '')));
-    setPassable(area.map((row, r) => row.map((cell, c) => walls[cell] ? '' : (
-      interactions[`${originY + r + 1},${originX + c + 1}`] ? '' : cell
-    ))));
+    const { solid, passable } = terrain(area, walls, interactions, [originY, originX]);
+    setSolid(solid);
+    setPassable(passable);
   }, [area, interactions]);
 
   useEffect(() => {
-    const backdrops = map.slice(posY - 2, posY + 1).map((row) => {
-      return row.slice(originX, originX + width);
-    });
-
-    // From the foreground working backwards, add walls that are not obscured
-    // by a more foreground layer already processed.
-    const layers = [];
-    backdrops.reverse().forEach((row) => {
-      const line = Array.from({ length: row.length }, () => ' ');
-      row.forEach((cell, index) => {
-        if (walls[cell]) {
-          const layer = layers.find((line) => walls[line[index]]);
-          if (!layer || hydratedInteractions[layer[index]]?.short) {
-            line[index] = cell;
-          }
-        }
-      });
-      // const upperLine = line.map((cell) => walls[cell]?.short ? '' : cell);
-      layers.push(line);
-    });
+    const layers = depthRows(
+      map, walls, (glyph) => hydratedInteractions[glyph]?.short, posY, originX, width,
+    );
     setForeground(layers[0]);
     setBackground1(layers[1]);
     setBackground2(layers[2]);

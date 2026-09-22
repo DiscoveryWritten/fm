@@ -12,13 +12,8 @@ import useInventory from './hooks/useInventory';
 import useSave from './hooks/useSave';
 import useEvent from './hooks/useEvent';
 import useMediaQuery from './hooks/useMediaQuery';
+import { START_WORLD, START_Y, START_X, START_LOG } from './start';
 
-const START_WORLD = 'Terra Montans.txt'
-const [START_Y, START_X] = [20, 22];
-const START_LOG = [
-  "You've never been this tired before.",
-  'You wake up in a small room, the walls are made of stone and the floor is dirt.',
-];
 
 const VIEWPORT_WIDTH = 16;
 const VIEWPORT_HEIGHT = 8;
