@@ -32,8 +32,8 @@ breaks, because `battle` isn't saved.
 
 `actions/Load.js` returns save-slot names as plain **strings**. The menu
 renders `option.name`, so it shows `1:undefined`. Choosing an entry pushes a
-junk submenu, and no `Load` event exists to act on it. The only load path is
-the broken autoload above.
+junk submenu, and no `Load` event exists to act on it. Saves still resume on
+reload, because each `useSave` restores the latest slot when it mounts.
 
 ### Fight strategy selection ignores damage (verified)
 

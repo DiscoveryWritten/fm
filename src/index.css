@@ -116,18 +116,45 @@ button:focus-visible {
   }
 }
 
-/* Mobile: the page becomes the calculator */
-.calculator.compact {
-  width: 100%;
-  max-width: none !important;
-  box-sizing: border-box;
-  padding: 8px 0 0;
+/* Mobile: the page becomes the calculator. It fills the dynamic viewport and
+   never scrolls, so browser chrome appearing or collapsing can't shift it. */
+html.compact,
+html.compact body {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
   background-color: #2b2b2b;
-  border-radius: 18px 18px 0 0;
 }
-.calculator.compact .displays > div {
+.calculator.compact {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100dvh;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+  background-color: #2b2b2b;
+  touch-action: none;
+}
+.calculator.compact .main-slot {
+  flex: 1;
+  min-height: 0;
+  margin: 8px 8px 0;
+}
+.calculator.compact .keypad {
+  flex: none;
+}
+.calculator.compact .displays {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.calculator.compact .displays > .screen-slot {
+  position: absolute;
 }
 .calculator.compact .displays > div[hidden] {
   display: none;
