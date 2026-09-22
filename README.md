@@ -103,6 +103,10 @@ Still tweaking things but the working examples are the templates I expand.
   - Doors declare a second coordinate.  If a door has a `key` attribute, you need to be wearing that key as an equipped "ring" to bypass the lockout.
   - World Doors are just doors that also provide a new map id, meaning that the destination coordinate it gives should be in the row-column space of that new map.
   
+### Developer docs
+
+See [docs/](docs/README.md) for the architecture, the exact grammar of every text file, the weather/zone internals, known issues, and deployment notes.
+
 ## Who?
 
 I'm Autumn, and I don't know why I do anything but I know when I'm having fun.
