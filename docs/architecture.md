@@ -86,25 +86,49 @@ on those rows are placed on the strip that matches their depth.
 ## Mobile: calculator mode
 
 Below 900 px wide (`COMPACT_QUERY` in `App.jsx`), the page becomes a
-calculator.
+calculator. It's a fixed `100dvh` box that never scrolls, so Safari's
+toolbars can't push it around, and it respects the safe-area insets
+(`viewport-fit=cover`).
 
-- **One screen at a time.** Only one display is shown. The others stay
-  mounted, just `hidden`, so their state and key listeners keep running.
-- **Fitted zoom.** The shown screen is scaled to fit the window above the
-  keypad (`useFitMagnification`). That fitted value is never saved, so it
-  doesn't overwrite the desktop zoom.
-- **The keypad plays the keyboard.** `Keypad` dispatches the same
+- **Screens never unmount.** All three stay mounted, because their hooks hold
+  game state. `placeScreen` absolutely positions each one over the **main
+  slot** (the focused screen), the **pin slot** (the pinned screen), or hides
+  it. Each gets a magnification fitted to its slot, and those fitted values
+  are never saved.
+- **The keypad plays the keyboard.** It dispatches the same
   `keydown`/`keyup` events on `window` that a real keyboard would, using the
   focused screen's keymap. The display components don't know it exists.
 
-| Button | STAT | WORLD | MENU |
-| -- | -- | -- | -- |
-| ▲ ▼ ◀ ▶ | `w s a d` | arrows | `k j`, and `-` / `=` for paging |
-| CLEAR | `Escape` | none | `Backspace` |
-| ENTER | Space | none | `Enter` |
-| 1–0 | digits (the menu uses them) | | |
+### Keypad
 
-The d-pad repeats while held. The soft keys STAT / WORLD / MENU pick the focus.
+- **Soft keys** (STAT / WORLD / MENU): tap to focus that screen. Hold to pin
+  or unpin it into the slot left of the pad. Tapping the pin slot focuses the
+  pinned screen, which then moves up to the main slot until focus leaves it.
+- **Donut:** four arc buttons around a sunken **ENTER** well, with a small
+  **CLR** at the 45° top-right.
+- **Digits** 1–0 are always sent as themselves.
+
+| Zone | STAT | WORLD | MENU |
+| -- | -- | -- | -- |
+| ▲ ▼ | `w` `s` | arrows | `k` `j` |
+| ◀ ▶ | `a` `d` | arrows | `-` `=` (drawn blue as `−` `+` pagers) |
+| ENTER well | Space | none | `Enter` |
+| CLR | `Escape` | none | `Backspace` |
+
+**One finger is tracked across the whole pad** (`usePadGesture`):
+
+| Zone kind | Behavior |
+| -- | -- |
+| arrows | fire on entry and repeat while held |
+| digits | fire on entry, so dragging across them previews the menu selection |
+| ENTER, CLR | highlight on entry, fire only if the finger lifts inside |
+
+So you can slide from an arrow into the well and lift to confirm.
+
+`keyup` is sent 60 ms after `keydown`. `DisplayMenu`'s Enter guard resets on
+`keyup`, and it has to arrive after React renders the `keydown`, or the next
+Enter is swallowed.
+
 Focus also moves on its own:
 
 - **To MENU** when an `interaction` arrives that has something to pick.
@@ -227,8 +251,11 @@ registers two listeners on `window`:
   `localStorage["<slot>/<key>"]` as JSON, and sets `localStorage.latest` to the
   slot. The slot comes from `event.detail.slot`, or `latest`, or `"Hero"`.
   Menu items never carry a `slot`, so in practice the slot is always `Hero`.
-- **`load`** (the browser's page-load event, lowercase): reads every key back
-  and calls its setter.
+- **`load`**: reads every key back and calls its setter. Each hook also
+  does this once when it mounts, if a save exists (`localStorage.latest` is
+  set), so a reload always resumes. It no longer depends on the browser's
+  page `load` event firing after React is ready. Dispatching `load` with
+  `detail.slot` restores that slot.
 
 Keys written per slot: `magnification`, `width`, `height`, `startWorld`,
 `startX`, `startY`, `x`, `y`, `zone`, `menuChoice`, `player/hp`,
@@ -238,10 +265,6 @@ Keys written per slot: `magnification`, `width`, `height`, `startWorld`,
 
 `DisplayWorld` has a second, write-only `useSave` for the same world keys,
 because `App`'s copy lost a save-before-remount race (see its comment).
-
-Autoload depends on React having registered its `load` listeners before the
-browser fires `load`. That's a timing race: see
-[known-issues.md](known-issues.md#save-autoload-is-a-timing-race-verified).
 
 ## Event catalog
 

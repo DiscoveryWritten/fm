@@ -13,21 +13,6 @@ Ranked by how much each one gets in the way of launching and playing.
 Vite copies all of `public/` into `dist/`. Nothing at runtime loads the model,
 because `useAnalyzer` is commented out. See [deployment.md](deployment.md).
 
-### Save autoload is a timing race (verified)
-
-`useSave` restores state from the browser's `load` event, so it only works if
-React has registered its listeners before the browser fires `load`. Whether
-that happens depends on how fast the page loads.
-
-- In a headless run of the production build, `load` fired **first** every
-  time: on the first visit, and on three reloads after saving. The player
-  spawned fresh each time.
-- In real use, the first visit tends to lose and a reload usually wins.
-
-Dispatching `window.dispatchEvent(new Event('load'))` by hand after mount does
-restore the save, which confirms the listeners themselves work. The fix is to
-restore once on mount instead of waiting for `load`.
-
 ## Gameplay bugs
 
 ### Weather and interior zones (verified)
@@ -47,8 +32,8 @@ breaks, because `battle` isn't saved.
 
 `actions/Load.js` returns save-slot names as plain **strings**. The menu
 renders `option.name`, so it shows `1:undefined`. Choosing an entry pushes a
-junk submenu, and no `Load` event exists to act on it. The only load path is
-the broken autoload above.
+junk submenu, and no `Load` event exists to act on it. Saves still resume on
+reload, because each `useSave` restores the latest slot when it mounts.
 
 ### Fight strategy selection ignores damage (verified)
 

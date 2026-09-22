@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useLayoutEffect, useCallback, useRef } from 'react';
 
 import Visualizer from './Visualizer';
 import DisplayStats from './components/DisplayStats';
@@ -50,7 +50,6 @@ const KEYMAPS = { stats: KEYMAP_STATS, world: KEYMAP_WORLD, menu: KEYMAP_MENU };
 // Below this width the game becomes a calculator: one screen at a time, with an
 // on-screen keypad instead of a keyboard.
 const COMPACT_QUERY = '(max-width: 900px)';
-const COMPACT_GUTTER = 8;
 
 export default function App({
   startMagnification=2,
@@ -75,11 +74,21 @@ export default function App({
   const [interaction, setInteraction] = useState(null);
   const [focus, setFocus] = useState('world');
   const compact = useMediaQuery(COMPACT_QUERY);
-  const keypadRef = useRef(null);
-  const fitMagnification = useFitMagnification({
-    enabled: compact, width, height, reservedRef: keypadRef,
+  const [pinned, setPinned] = useState(null);
+  const calculatorRef = useRef(null);
+  const mainSlotRef = useRef(null);
+  const pinSlotRef = useRef(null);
+  const slotRects = {
+    main: useRelativeRect(mainSlotRef, calculatorRef, compact),
+    pin: useRelativeRect(pinSlotRef, calculatorRef, compact && Boolean(pinned)),
+  };
+  const place = (screen) => placeScreen({
+    compact, focus, pinned, screen, slotRects, width, height, magnification,
   });
-  const displayMagnification = compact ? fitMagnification : magnification;
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('compact', compact);
+  }, [compact]);
   const {
     stats,
     inventory, equipment, log,
@@ -144,9 +153,10 @@ export default function App({
       </p>
       </>}
 
-      <div className={compact ? 'calculator compact' : 'calculator'} style={{display: 'flex', flexDirection: 'column', alignItems: 'stretch', maxWidth: 'fit-content', margin: 'auto'}}>
+      <div ref={calculatorRef} className={compact ? 'calculator compact' : 'calculator'} style={compact ? undefined : {display: 'flex', flexDirection: 'column', alignItems: 'stretch', maxWidth: 'fit-content', margin: 'auto'}}>
+        {compact && <div ref={mainSlotRef} className="main-slot" />}
         <div className="displays" style={{display: 'flex', flexDirection: 'row', justifyContent: 'center'}}>
-          <div hidden={compact && focus !== 'stats'}>
+          <div {...place('stats').wrapper}>
           <DisplayStats
             {...stats.current}
             inventory={inventory}
@@ -156,11 +166,11 @@ export default function App({
 
             width={width}
             height={height}
-            magnification={displayMagnification}
+            magnification={place('stats').magnification}
             keyMap={KEYMAP_STATS}
           />
           </div>
-          <div hidden={compact && focus !== 'world'}>
+          <div {...place('world').wrapper}>
           <DisplayWorld
             battle={battle}
             target={interaction}
@@ -172,11 +182,11 @@ export default function App({
             startY={startY}
             width={width}
             height={height}
-            magnification={displayMagnification}
+            magnification={place('world').magnification}
             keyMap={KEYMAP_WORLD}
           />
           </div>
-          <div hidden={compact && focus !== 'menu'}>
+          <div {...place('menu').wrapper}>
           <DisplayMenu
             target={interaction}
             gold={stats.current.gold}
@@ -188,15 +198,18 @@ export default function App({
 
             width={width}
             height={height}
-            magnification={displayMagnification}
+            magnification={place('menu').magnification}
             keyMap={KEYMAP_MENU}
           />
           </div>
         </div>
         {compact && (
-          <div ref={keypadRef}>
-            <Keypad focus={focus} setFocus={setFocus} keyMaps={KEYMAPS} />
-          </div>
+          <Keypad
+            focus={focus} setFocus={setFocus}
+            pinned={pinned} setPinned={setPinned}
+            keyMaps={KEYMAPS}
+            pinRef={pinSlotRef}
+          />
         )}
         <div hidden>
         {/* <div style={{display: 'flex', flexDirection: 'row'}}> */}
@@ -235,9 +248,9 @@ export default function App({
         id="visualizer-toggle"
         onChange={e => document.getElementById('visualizer').hidden =! e.target.checked}
       />Visualizer</label>}
-      <div>
+      {!compact && <div>
         <a href="https://github.com/tiliv/fm">GitHub</a> • <a href="https://ko-fi.com/discoverywritten#">Donate</a>
-      </div>
+      </div>}
       <Visualizer startWorld={startWorld} width={width} height={height} />
     </>
   )
@@ -308,28 +321,56 @@ function useEventFocus({ setFocus }) {
   useEvent('Fight', worldHandler);
 }
 
-// Largest magnification (in 0.05 steps) that fits one screen plus the keypad
-// in the window.
-function useFitMagnification({ enabled, width, height, reservedRef }) {
-  const [fit, setFit] = useState(1);
+// Where each screen is drawn.  Screens never unmount (their hooks hold game
+// state); in compact mode they are absolutely positioned over the main slot
+// or the pin slot, or hidden, and each gets a magnification fitted to its slot.
+function placeScreen({ compact, focus, pinned, screen, slotRects, width, height, magnification }) {
+  if (!compact) return { magnification, wrapper: {} };
+  const slot = screen === focus ? 'main' : screen === pinned ? 'pin' : null;
+  const rect = slot && slotRects[slot];
+  if (!rect) return { magnification, wrapper: { hidden: true } };
 
-  useEffect(() => {
-    if (!enabled) return;
+  const fit = Math.min(rect.w / (width * FONT_WIDTH), rect.h / (height * FONT_HEIGHT));
+  const mag = Math.max(0.25, Math.floor(fit * 20) / 20);
+  return {
+    magnification: mag,
+    wrapper: {
+      className: `screen-slot ${slot}`,
+      style: {
+        left: rect.x + (rect.w - width * FONT_WIDTH * mag) / 2,
+        top: rect.y + (rect.h - height * FONT_HEIGHT * mag) / 2,
+      },
+    },
+  };
+}
+
+// An element's box relative to another, kept current as either resizes.
+function useRelativeRect(ref, rootRef, enabled) {
+  const [rect, setRect] = useState(null);
+
+  useLayoutEffect(() => {
+    if (!enabled || !ref.current || !rootRef.current) {
+      setRect(null);
+      return;
+    }
     const update = () => {
-      const reserved = reservedRef.current?.offsetHeight || 0;
-      const byWidth = (window.innerWidth - 2 * COMPACT_GUTTER) / (width * FONT_WIDTH);
-      const byHeight = (window.innerHeight - reserved - 2 * COMPACT_GUTTER) / (height * FONT_HEIGHT);
-      setFit(Math.max(0.5, Math.floor(Math.min(byWidth, byHeight) * 20) / 20));
+      const r = ref.current.getBoundingClientRect();
+      const o = rootRef.current.getBoundingClientRect();
+      const next = { x: r.left - o.left, y: r.top - o.top, w: r.width, h: r.height };
+      setRect((prev) => (
+        prev && Object.keys(next).every((k) => Math.abs(prev[k] - next[k]) < 0.5) ? prev : next
+      ));
     };
     update();
-    window.addEventListener('resize', update);
     const observer = new ResizeObserver(update);
-    if (reservedRef.current) observer.observe(reservedRef.current);
+    observer.observe(ref.current);
+    observer.observe(rootRef.current);
+    window.addEventListener('resize', update);
     return () => {
-      window.removeEventListener('resize', update);
       observer.disconnect();
+      window.removeEventListener('resize', update);
     };
-  }, [enabled, width, height]);
+  }, [enabled]);
 
-  return fit;
+  return rect;
 }
