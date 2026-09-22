@@ -5,6 +5,7 @@ import files from 'virtual:content-manifest';
 import checks from '.';
 import { loadContent } from './content';
 import { collect, run } from './runner';
+import { readText } from '../content';
 import './page.css';
 
 const root = document.getElementById('checks');
@@ -31,18 +32,13 @@ root.append(
 );
 
 async function main() {
-  const base = import.meta.env.BASE_URL;
+  // Read files the way the game does, through the same content sources.
   let failedLoads = [];
   const content = await loadContent(files, (file) => (
-    fetch(`${base}${file.split('/').map(encodeURIComponent).join('/')}`, { cache: 'no-store' })
-      .then((res) => {
-        if (!res.ok) throw new Error(`${res.status}`);
-        return res.text();
-      })
-      .catch((error) => {
-        failedLoads.push(`${file} (${error.message})`);
-        return '';
-      })
+    readText(file).catch((error) => {
+      failedLoads.push(`${file} (${error.message})`);
+      return '';
+    })
   ));
 
   let [passed, failed] = [0, 0];

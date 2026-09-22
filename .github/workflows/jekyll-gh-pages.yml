@@ -30,6 +30,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Games can live in their own repos, mounted under games/ as submodules.
+          submodules: recursive
       - name: Set up Node
         uses: actions/setup-node@v4
         with:

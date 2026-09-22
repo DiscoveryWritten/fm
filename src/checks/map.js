@@ -1,7 +1,7 @@
 import {
   parseWorld, isOpen, viewport, onPage, viewArea, terrain, depthRows, explore,
 } from '../world';
-import { START_WORLD, START_Y, START_X } from '../start';
+import { parseGame } from '../game';
 
 // A small world drawn for these checks.  0-based [y, x] positions; the file's
 // own coordinates are 1-based.
@@ -149,9 +149,11 @@ export default function register({ describe, it, expect }, content) {
     });
   });
 
-  describe(`world/${START_WORLD}`, () => {
-    const world = parseWorld(content.text[`world/${START_WORLD}`]);
-    const spawn = [START_Y - 1, START_X - 1];
+  const game = parseGame(content.text['game.txt']);
+
+  describe(`world/${game.world} (the start world)`, () => {
+    const world = parseWorld(content.text[`world/${game.world}`]);
+    const spawn = [game.start[0] - 1, game.start[1] - 1];
     const everything = explore(world, spawn);
     const withoutKeys = explore(world, spawn, { canOpen: (door) => !door.attributes.key });
     const named = (key) => `${world.interactions[key].label} at ${key}`;

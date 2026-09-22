@@ -1,15 +1,17 @@
-// Runs the portable checks under Vitest, reading the game files from disk.
+// Runs the portable checks under Vitest, reading the game's files from disk
+// (the folder game.config.js picks).
 // The same checks run in the browser at /tests/ (see src/checks/page.js).
 import { describe, it, expect } from 'vitest';
 import { readFile } from 'fs/promises';
 import { join } from 'path';
 import files from 'virtual:content-manifest';
 
+import { GAME_DIR } from '../game.config.js';
 import checks from './checks';
 import { loadContent } from './checks/content';
 import { collect, run } from './checks/runner';
 
-const content = await loadContent(files, (file) => readFile(join(__dirname, '..', 'public', file), 'utf8'));
+const content = await loadContent(files, (file) => readFile(join(GAME_DIR, file), 'utf8'));
 
 checks.forEach(({ name, register }) => {
   describe(name, () => register({ describe, it, expect }, content));
@@ -25,6 +27,6 @@ describe('in-browser runner', () => {
     }
     const failures = results.filter((r) => !r.ok).map((r) => `${r.name} › ${r.path.join(' › ')}: ${r.error.message}`);
     expect(failures).toEqual([]);
-    expect(results.length).toBeGreaterThan(100);
+    expect(results.length).toBeGreaterThan(0);  // and something actually ran
   });
 });

@@ -1,3 +1,5 @@
+import { readText } from './content';
+
 export const EQUIPMENT = {
   weapon: "Weapons",
   body: "Body armor",
@@ -93,8 +95,7 @@ export function bufferizeList(topMargin, buffer, width, height, scrollOffset) {
 export async function loadSprite(kind, item, { offsetLeft=0, width, height }, ...positions) {
   const { template='none', rarity=0, name='--' } = item;
   const [[row, col], secondPosition=null] = positions;
-  return await fetch(`equipment/${kind}/${template}.txt?${item.kind}`)
-    .then((res) => res.text())
+  return await readText(`equipment/${kind}/${template}.txt`)
     .then((text) => {
       const buffer = Array.from({ length: height }, () => Array(offsetLeft + width).fill(' '));
       const [graphics, stats] = text.trim().split('---');

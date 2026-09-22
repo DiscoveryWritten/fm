@@ -8,9 +8,11 @@ import buffers from './buffers';
 import log from './log';
 import map from './map';
 import files from './files';
+import game from './game';
 
 export default [
   { name: 'Game files', register: files },
+  { name: 'Game setup', register: game },
   { name: 'Map', register: map },
   { name: 'Zones', register: zones },
   { name: 'Object specs', register: interactions },

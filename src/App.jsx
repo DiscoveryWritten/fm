@@ -12,7 +12,6 @@ import useInventory from './hooks/useInventory';
 import useSave from './hooks/useSave';
 import useEvent from './hooks/useEvent';
 import useMediaQuery from './hooks/useMediaQuery';
-import { START_WORLD, START_Y, START_X, START_LOG } from './start';
 
 
 const VIEWPORT_WIDTH = 16;
@@ -47,10 +46,11 @@ const KEYMAPS = { stats: KEYMAP_STATS, world: KEYMAP_WORLD, menu: KEYMAP_MENU };
 const COMPACT_QUERY = '(max-width: 900px)';
 
 export default function App({
+  game,  // from game.txt: { title, world, start: [row, col], log }
   startMagnification=2,
-  beginWorld=START_WORLD,
-  beginX=START_X - 1,
-  beginY=START_Y - 1,
+  beginWorld=game.world,
+  beginX=game.start[1] - 1,
+  beginY=game.start[0] - 1,
   startWidth=VIEWPORT_WIDTH,
   startHeight=VIEWPORT_HEIGHT,
 }) {
@@ -88,7 +88,7 @@ export default function App({
     stats,
     inventory, equipment, log,
     handlers,
-  } = useInventory('player', { startLog: START_LOG });
+  } = useInventory('player', { startLog: game.log });
 
   useSave({
     magnification: [magnification, setMagnification],

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 
 import { loadZones } from '../zones';
+import { readText } from '../content';
 import { parseWorld } from '../world';
 
 export default function useWorld({ world }) {
@@ -11,8 +12,7 @@ export default function useWorld({ world }) {
   const [zones, setZones] = useState([]);
 
   useEffect(() => {
-    fetch(`world/${world}`)
-      .then((res) => res.text())
+    readText(`world/${world}`)
       .then((text) => {
         window.dispatchEvent(new CustomEvent('world', { detail: text }));
         const { map, size, walls, interactions, zoneSpecs, errors } = parseWorld(text);
@@ -26,7 +26,7 @@ export default function useWorld({ world }) {
         const zones = await loadZones(
           boxGroups,
           size,
-          (dataFile) => fetch(`overlays/${dataFile}`).then((res) => res.text()),
+          (dataFile) => readText(`overlays/${dataFile}`),
           (detail) => window.dispatchEvent(new CustomEvent('_overlay', { detail })),
         );
         setZones(zones);
