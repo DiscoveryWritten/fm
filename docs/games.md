@@ -33,10 +33,22 @@ Terra Montans.txt (20,22)
 Log
 You wake up in a small room, the walls are made of stone and the floor is dirt.
 You've never been this tired before.
+---
+Stats
+A  attack   f55  gear
+D  defense  58f  gear
+S  speed    8d8  gear
+H  hearing  fd4
+R  anger    f44
 ```
 
 - **Start:** a world file, then the 1-based `(row,col)` to spawn at.
 - **Log:** one entry per line, oldest first.
+- **Stats:** one per line: a short code, a full name, a color (3 or 6 hex
+  digits, no `#`), and `gear` if the stat is summed from what's worn. Codes
+  and names must be unique. Map lines use them as tokens (`#H2`), and
+  dialogue marks phrases with them (`R+1:HEY!`); see
+  [file-formats.md](file-formats.md). The color is the phrase's highlight.
 - The engine reads `game.txt` before anything else. If it's missing or has no
   valid Start line, the page says so instead of starting.
 
