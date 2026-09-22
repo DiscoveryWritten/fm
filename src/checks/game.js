@@ -6,7 +6,8 @@ export default function register({ describe, it, expect }) {
     const text = [
       'Title', 'A Small Game', '---',
       'Start', 'Somewhere Else.txt (3,14)', '---',
-      'Log', 'First thing that happened.', 'Second thing.',
+      'Log', 'First thing that happened.', 'Second thing.', '---',
+      'Stats', 'A  attack  f55  gear', 'H  hearing  fd4',
     ].join('\n');
 
     it('reads the title, start world and 1-based spawn', () => {
@@ -17,6 +18,13 @@ export default function register({ describe, it, expect }) {
 
     it('keeps the opening log newest first, as the game shows it', () => {
       expect(parseGame(text).log).toEqual(['Second thing.', 'First thing that happened.']);
+    });
+
+    it('reads the declared stats', () => {
+      expect(parseGame(text).stats).toEqual([
+        { code: 'A', name: 'attack', color: '#f55', gear: true },
+        { code: 'H', name: 'hearing', color: '#fd4', gear: false },
+      ]);
     });
 
     it('needs a start line', () => {

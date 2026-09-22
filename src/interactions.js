@@ -9,7 +9,8 @@ const NewRowCol = /\((?<newRow>\d+),(?<newCol>\d+)\)/.source;
 const Label = /(?<label>[^/#]+)/.source;
 const DataFile = /(?<dataFile>\w+\.txt)/.source;
 const OptionalInventory = /(?<inventory>(,\$[^,]+)*)/.source;
-const OptionalAttributes = /(?<attributes>(#[^=]+=[^#]+)*)/.source;
+// #key=value pairs, or bare #tokens like the stat token #H2.
+const OptionalAttributes = /(?<attributes>(#[^#=]+(=[^#]+)?)*)/.source;
 
 const SPRITE_SPEC = RegExp(`^${Sprite}:${Label}${OptionalAttributes}$`);
 const ZONE_SPEC = RegExp(`^${DataFile}@${Directions}:${Boxes}${OptionalAttributes}$`);
@@ -153,7 +154,7 @@ function amendWorld(target, {}) {
 function amendObj(target, {}) {
   const { attributes={} } = target;
   Object.entries(attributes)
-    .filter(([name]) => /^[A-Z]/.test(name))
+    .filter(([name, text]) => /^[A-Z]/.test(name) && text !== undefined)
     .forEach(([name, text]) => {
       target[name] = { name, text };
     });
@@ -163,7 +164,7 @@ function amendObj(target, {}) {
 function amendSprite(target, {}) {
   const { attributes={} } = target;
   Object.entries(attributes)
-    .filter(([name]) => /^[A-Z]/.test(name))
+    .filter(([name, text]) => /^[A-Z]/.test(name) && text !== undefined)
     .forEach(([rawName, text]) => {
       const { name, data='{}' } = /^(?<name>[^{]+)(?<data>\{.*\})?$/.exec(rawName).groups;
       target[name] = { name, text, event: `${name}.player`, ...eval(`(${data})`) };

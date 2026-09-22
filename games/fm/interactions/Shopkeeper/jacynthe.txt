@@ -30,4 +30,4 @@ Save
 "Your story's safe with me, ${name}."
 ---
 ?Shout
-"Hey! Will ye keep it down?  What's-a matter wit you?"
+"R+1:HEY! Will ye keep it down?  What's-a matter wit you?"

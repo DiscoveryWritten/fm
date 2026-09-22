@@ -12,6 +12,7 @@ import useInventory from './hooks/useInventory';
 import useSave from './hooks/useSave';
 import useEvent from './hooks/useEvent';
 import useMediaQuery from './hooks/useMediaQuery';
+import useCharacterStats from './hooks/useCharacterStats';
 
 
 const VIEWPORT_WIDTH = 16;
@@ -103,6 +104,7 @@ export default function App({
   useEventFight({ setBattle, setInteraction });
   useEventDestination({ startWorld, setStartWorld, setStartY, setStartX });
   useEventFocus({ setFocus });
+  useCharacterStats();
 
   // Set up world
   useEffect(() => {
@@ -186,6 +188,7 @@ export default function App({
             target={interaction}
             gold={stats.current.gold}
             ambientMenu={ambientMenu}
+            stats={game.stats}
 
             inventory={inventory}
             equipment={equipment}
