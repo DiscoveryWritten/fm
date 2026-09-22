@@ -14,9 +14,11 @@
 4. `App` renders `DisplayStats`, `DisplayWorld` and `DisplayMenu` side by side,
    then the hidden `Visualizer` debug panel.
 
-Starting world and position live in `src/start.js`:
-`Terra Montans.txt`, row 20, col 22 (1-based). Props subtract 1, because the
-engine works 0-based internally and the text files are 1-based.
+Before any of that, `main.jsx` reads the game's `game.txt` (see
+[games.md](games.md)) and passes it to `App` as `game`: the title, start world,
+1-based spawn and opening log. `App` subtracts 1 from the spawn, because the
+engine works 0-based internally and the text files are 1-based. Every game
+file is read through `readText()` in `src/content.js`.
 
 ## Component and hook map
 
@@ -35,7 +37,7 @@ App
 │
 ├─ DisplayWorld  (world screen, arrows)
 │   ├─ useLocation
-│   │   ├─ useWorld          fetch + parse world file, fetch overlays -> map, walls, interactions, zones
+│   │   ├─ useWorld          read + parse world file, read overlays -> map, walls, interactions, zones
 │   │   └─ usePosition       player x/y, bump detection, door traversal, zone detection, weather rolls
 │   └─ useInteraction        turns a bump into the targeted interaction + highlight buffer
 │
@@ -158,7 +160,7 @@ Paging reaches them instead.
 
 ## World model
 
-`useWorld` fetches `world/<file>`, and `parseWorld` in `src/world.js`
+`useWorld` reads `world/<file>`, and `parseWorld` in `src/world.js`
 splits it on `---\n`:
 
 - **Section 1: map art.** Each row becomes an array of characters.
@@ -180,7 +182,7 @@ The rest of the map logic also lives in `src/world.js` as plain functions:
 (what's reachable on foot). `src/checks/map.js` exercises them.
 
 `useLocation` then **hydrates** interactions: for every coordinate
-interaction inside the current page, and every wall sprite, it fetches the NPC
+interaction inside the current page, and every wall sprite, it reads the NPC
 data file if there is one, then calls `parseInteraction`. That:
 
 - splits the data file into `---` sections,

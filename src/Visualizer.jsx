@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 
 import useEvent from './hooks/useEvent';
+import { readText } from './content';
 
 export default function Visualizer({ startWorld, width, height }) {
   const [rawWorld, setRawWorld] = useState(null);
@@ -32,9 +33,9 @@ export default function Visualizer({ startWorld, width, height }) {
   }, [origin]);
 
   useEffect(() => {
-    fetch(`world/debug.txt`)
-      .then((res) => res.text())
+    readText('world/debug.txt')
       .then(setFontDemo)
+      .catch(() => setFontDemo(null))
   }, []);
 
   useEventWorld({ setRawWorld });

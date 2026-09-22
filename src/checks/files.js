@@ -1,11 +1,24 @@
 // Checks every shipped text file the way the engine will read it, so an
 // authoring mistake fails here instead of silently vanishing in game.
 import { classifyObjectSpec, TYPES } from '../interactions';
+import { parseGame } from '../game';
 
 // World files with no object section (pure art).
 const ART_ONLY = ['world/debug.txt'];
 
 export default function register({ describe, it, expect }, content) {
+  describe('game.txt', () => {
+    it('exists and names a start world and spawn point', () => {
+      expect(content.exists('game.txt')).toBe(true);
+      expect(() => parseGame(content.text['game.txt'])).not.toThrow();
+    });
+
+    it('starts in a world file that exists', () => {
+      const { world } = parseGame(content.text['game.txt']);
+      expect(content.exists(`world/${world}`)).toBe(true);
+    });
+  });
+
   const worlds = content.files.filter((f) => f.startsWith('world/') && !ART_ONLY.includes(f));
 
   worlds.forEach((world) => describe(world, () => {

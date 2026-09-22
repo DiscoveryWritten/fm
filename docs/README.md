@@ -7,7 +7,8 @@ confirmed by running the app in a browser, it says so.
 | Doc | What it answers |
 | -- | -- |
 | [architecture.md](architecture.md) | How the app boots, how the three displays draw, how state and saves work, the full event catalog |
-| [file-formats.md](file-formats.md) | The exact grammar of every hand-edited text file under `public/`, including the gotchas the regexes impose |
+| [games.md](games.md) | What a game folder is, `game.txt`, building a chosen game, moving a game into its own repo as a submodule, and where runtime content sources plug in |
+| [file-formats.md](file-formats.md) | The exact grammar of every hand-edited text file in a game, including the gotchas the regexes impose |
 | [weather-zones.md](weather-zones.md) | How overlay zones are loaded, chosen, rolled and drawn, and why nesting order is not reliably honored |
 | [known-issues.md](known-issues.md) | Everything found broken or fragile, ranked, with evidence |
 | [testing.md](testing.md) | How to run the tests, what they cover, and how to use them when changing things |
@@ -16,10 +17,11 @@ confirmed by running the app in a browser, it says so.
 ## One-screen mental model
 
 - **Static SPA, no backend.** Vite + React 18. `yarn build` produces `dist/`,
-  which is `index.html`, one JS bundle, and a verbatim copy of `public/`.
-- **The game is data.** At runtime the app `fetch()`es plain text from
-  `public/world`, `public/overlays`, `public/interactions` and
-  `public/equipment`, parses it with regexes, and never writes it back.
+  which is `index.html`, the JS bundles, a verbatim copy of `public/` (engine assets), and the game's folder under `game/`.
+- **The game is data.** A game is a folder of text files (`games/fm/`, see
+  [games.md](games.md)). At runtime the engine reads them through
+  `readText()` in `src/content.js`, parses them with regexes, and never
+  writes them back.
 - **Three independent "calculator screens"** (status, world, menu), each with
   its own keymap, are drawn as stacks of transparent character grids. See
   [architecture.md § Rendering](architecture.md#rendering-the-buffer-stack).

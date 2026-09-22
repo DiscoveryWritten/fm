@@ -1,43 +1,53 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import { readdirSync, statSync } from 'fs'
-import { join, relative, resolve } from 'path'
+import { readFileSync, existsSync, statSync } from 'fs'
+import { join, resolve } from 'path'
 
-// Text trees under public/ that make up a game.
-const CONTENT_DIRS = ['world', 'overlays', 'interactions', 'equipment'];
+import { GAME_DIR, gameFiles } from './game.config.js'
 
-// `import files from 'virtual:content-manifest'` lists every game text file,
-// relative to public/.  A static host can't list directories, so this is how
-// the in-browser checks (and later, offline caching) know what exists.
-function contentManifest() {
+// The game's folder is served at /game/: from disk under `yarn dev`, and
+// copied into dist/game/ by `yarn build`.  `import files from
+// 'virtual:content-manifest'` lists its files, since a static host can't list
+// directories (the /tests/ page uses it, and offline caching will).
+function game() {
   const id = 'virtual:content-manifest';
   const resolvedId = '\0' + id;
-  const publicDir = resolve(__dirname, 'public');
-  const walk = (dir) => readdirSync(dir).flatMap((name) => {
-    const path = join(dir, name);
-    return statSync(path).isDirectory() ? walk(path) : [path];
-  });
 
   return {
-    name: 'content-manifest',
+    name: 'game',
     resolveId: (source) => source === id ? resolvedId : null,
     load(loadId) {
       if (loadId !== resolvedId) return null;
-      const files = CONTENT_DIRS
-        .flatMap((dir) => walk(join(publicDir, dir)))
-        .filter((path) => path.endsWith('.txt'))
-        .map((path) => relative(publicDir, path).split('\\').join('/'))
-        .sort();
-      return `export default ${JSON.stringify(files)};`;
+      return `export default ${JSON.stringify(gameFiles())};`;
     },
     configureServer(server) {
+      server.watcher.add(GAME_DIR);
       const refresh = (path) => {
-        if (!path.startsWith(publicDir)) return;
+        if (!path.startsWith(GAME_DIR)) return;
         const mod = server.moduleGraph.getModuleById(resolvedId);
         if (mod) server.moduleGraph.invalidateModule(mod);
       };
       server.watcher.on('add', refresh);
       server.watcher.on('unlink', refresh);
+
+      server.middlewares.use('/game/', (req, res, next) => {
+        const path = decodeURIComponent(req.url.split('?')[0]);
+        const file = join(GAME_DIR, path);
+        if (!file.startsWith(GAME_DIR) || !existsSync(file) || !statSync(file).isFile()) {
+          res.statusCode = 404;
+          res.end('Not found');
+          return;
+        }
+        res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+        res.end(readFileSync(file));
+      });
+    },
+    generateBundle() {
+      gameFiles().forEach((file) => this.emitFile({
+        type: 'asset',
+        fileName: `game/${file}`,
+        source: readFileSync(join(GAME_DIR, file)),
+      }));
     },
   };
 }
@@ -48,7 +58,7 @@ export default defineConfig({
     react({
       jsxImportSource: '@welldone-software/why-did-you-render',
     }),
-    contentManifest(),
+    game(),
   ],
   base: '/',
   build: {

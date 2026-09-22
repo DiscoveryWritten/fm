@@ -5,6 +5,7 @@ import useWorld from './useWorld';
 import { parseInteraction, TYPES } from '../interactions';
 import { parseDirectionsList } from '../utils';
 import { viewport, viewArea, terrain, depthRows, onPage } from '../world';
+import { readText } from '../content';
 import * as Strategies from '../strategies';
 
 export default function useLocation({
@@ -57,8 +58,7 @@ export default function useLocation({
         const { type, label, dataFile } = interaction;
         let text = '';
         if (type === TYPES.NPC) {
-          text = await fetch(`interactions/${label}/${dataFile}`)
-            .then((res) => res.text())
+          text = await readText(`interactions/${label}/${dataFile}`)
             .catch((err) => `Err\n${err}`);
         }
 
