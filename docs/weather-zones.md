@@ -7,10 +7,10 @@ touch them:
 | Step | Where |
 | -- | -- |
 | Parse `file.txt@dirs:boxes#attrs` | `classifyObjectSpec` in `src/interactions.js` |
-| Fetch overlay art, expand to one zone per box | `useWorld.jsx:50-67` |
-| Pick the zone containing the player | `usePosition.jsx:75-88` |
-| Randomly swap to another zone | `usePosition.jsx:90-109` |
-| Tile, animate and draw it | `DisplayWorld.jsx:68-133` |
+| Fetch overlay art, expand to one zone per box | `loadZones` in `src/zones.js`, called by `useWorld` |
+| Pick the zone containing the player | `zoneAt` in `src/zones.js`, called by `usePosition` |
+| Randomly swap to another zone | `rollWeather` in `src/zones.js`, called by `usePosition` |
+| Tile, animate and draw it | the zone overlay effect in `DisplayWorld.jsx` |
 
 Only **one** zone is ever drawn: the one stored in `usePosition`'s `zone`
 state.
@@ -23,60 +23,24 @@ From the README: zones are declared global first and smallest last, and the
 
 ## What the code actually does
 
-### 1. Declaration order is lost at load time (the nesting bug)
+### 1. Declaration order was lost at load time (fixed)
 
-```js
-// useWorld.jsx:51-66
-const zones = [];
-await Promise.all(boxGroups.map(async (data) => {
-  const overlay = await fetch(`overlays/${dataFile}`).then(r => r.text());
-  ...
-  zones.push({ ...data, box, maxWidth });   // runs when THIS fetch resolves
-}));
-setZones(zones);
-```
+Each zone used to be pushed into a shared array when *its own* overlay fetch
+finished, so zones ended up in network-arrival order. In a browser, with the
+player inside the tavern, delaying `rain.txt` or `clouds.txt` let the global
+weather cover the interior.
 
-`Promise.all` preserves the order of its *results*, but these callbacks don't
-return anything. Each one pushes into a shared array **when its own fetch
-finishes**. So `zones` ends up in network-completion order, not file order.
-The detection loop (`for (const data of zones) if (inside) newZone = data`)
-then correctly implements "last one wins" over the wrong order.
-
-The spread operator isn't the problem. `{ ...data, box, maxWidth }` builds
-each zone correctly. The problem is *when* it gets pushed.
-
-**Reproduced in a real browser.** Using the production build under
-`vite preview`, the player stands inside the tavern's `dust.txt` box at row 22,
-col 39, and one overlay fetch is delayed by 400 ms at a time:
-
-| Fetch that arrives last | Overlay shown inside the tavern |
-| -- | -- |
-| (no delay) | dust |
-| `dust.txt` | dust |
-| `rain.txt` | **rain**, the global weather covering the interior |
-| `clouds.txt` | **clouds** |
-
-The result was identical on two runs. On localhost the fetches almost always
-finish in request order, which hides this. Behind a CDN with mixed cache
-states they won't.
-
-**Fix shape:** have the `map` callback *return* its zones and flatten the
-`Promise.all` result, which is in input order:
-
-```js
-const zones = (await Promise.all(boxGroups.map(async (data) => {
-  ...
-  return boxes.length
-    ? boxes.map((box) => ({ ...data, box, maxWidth }))
-    : [{ ...data, box: [1, 1, ...size], maxWidth }];
-}))).flat();
-```
+`loadZones` now has each spec *return* its zones, and flattens the
+`Promise.all` result, which keeps input order. `src/zones.test.js` resolves
+the fetches in reverse order to prove it: it failed with
+`dust, clouds, rain` before the fix. Re-running the browser repro afterwards
+showed dust in all four timing cases.
 
 ### 2. The "default" global weather is the last global, not the first
 
 Because the last matching zone wins and global zones match everywhere, the
 weather you get on load is always the **last** global line (in Terra
-Montans, `clouds`, assuming fetch order holds). Earlier global zones like
+Montans, `clouds`). Earlier global zones like
 `rain` are only reachable through a random roll. If the first global line was
 meant to be the default, the rule and the file disagree.
 
@@ -95,7 +59,7 @@ The weather state doesn't survive an interior visit.
 
 ### 4. Roll frequency is tied to render count, not time
 
-The roll effect at `usePosition.jsx:91` has **no dependency array**, so it
+The roll effect in `usePosition` has **no dependency array**, so it
 runs after every render of `DisplayWorld`. **Measured in the production
 build: 3 rolls per second while idle, and about 4.5 more per arrow-key
 press.** A `#100-100=clouds.txt` roll is "1 in 100 per render", so about one
@@ -109,14 +73,13 @@ that contains the roll. Ranges are inclusive. So `#1-3=a.txt#4-10=b.txt` means
 
 ### 5. A roll picks the first zone with that file name
 
-`setZone(zones.find(({ dataFile }) => dataFile === nextZone))` matches by file
-name only. If that overlay is used for several boxes, or for a box the player
-isn't in, you get the first one in the (unordered, see §1) array. Once the
+`rollWeather` matches the target by file name only. If that overlay is used for several boxes, or for a box the player
+isn't in, you get the first one declared. Once the
 zone is set, it draws only inside its box, so the screen can go blank.
 
 ### 6. Tiling seam
 
-`DisplayWorld.jsx:122-124` wraps the tile position by the **map** size first,
+`DisplayWorld.jsx` wraps the tile position by the **map** size first,
 then by the tile size:
 
 ```js
