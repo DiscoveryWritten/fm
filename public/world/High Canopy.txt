@@ -26,5 +26,4 @@
 █:stone
 ⍁:tree
 •:stone
----
 canopy.txt@>1>0<1:#fg=0004

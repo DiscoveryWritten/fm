@@ -2,6 +2,16 @@
   width: 100%;
   margin: 0 auto;
   text-align: center;
+  /* Screens are stacks of layered glyphs, so a text selection only ever grabs
+     the top layer and never reflects what's shown. Keep it off for the game. */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+#root input,
+#visualizer {
+  user-select: text;
+  -webkit-user-select: text;
 }
 #visualizer {
   width: 100%;

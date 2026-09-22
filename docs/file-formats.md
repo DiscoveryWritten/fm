@@ -1,7 +1,8 @@
 # Text file formats
 
 Everything under `public/` is fetched at runtime by relative URL. Editing a
-file and reloading is the whole authoring loop.
+file and reloading is the whole authoring loop. `yarn test content` checks
+every shipped file against the rules below.
 
 The grammars below are transcribed from the regexes in `src/interactions.js`
 and the loaders in `src/utils.js`. They were checked by running the real
@@ -18,7 +19,7 @@ code unit, so stick to BMP characters (the TI-83 font's glyphs all are).
 ```
 
 Only the **first** `---` split matters. The loader keeps `[map, objects]`
-and silently drops any third section.
+and silently drops any third section (`yarn test content` flags one).
 
 Each spec line is tried against these patterns **in this order**, and the first
 match wins:
@@ -61,8 +62,7 @@ match wins:
   default fg is `f00`.
 - `#min-max=<other>.txt` is a weather roll. See [weather-zones.md](weather-zones.md).
 - **Declare large to small.** The last declared zone that contains the player
-  is meant to win, but see [weather-zones.md](weather-zones.md) for why the
-  engine doesn't reliably preserve declaration order yet.
+  wins, so interiors go after the global weather.
 
 ```
 rain.txt@v2:#fg=fff8#100-100=clouds.txt

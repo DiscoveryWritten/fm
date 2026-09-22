@@ -17,8 +17,9 @@ because `useAnalyzer` is commented out. See [deployment.md](deployment.md).
 
 ### Weather and interior zones (verified)
 
-Nested zones depend on network timing. Weather resets when you leave an
-interior, and roll rate follows render count. Full analysis with the repro and
+Zone order now follows the world file regardless of network timing (fixed,
+with a test). Still open: weather resets when you leave an interior, and roll
+rate follows render count. Full analysis with the repro and
 a fix sketch: [weather-zones.md](weather-zones.md).
 
 ### No way out of battle view (read)
@@ -49,12 +50,11 @@ lookup throws.
 `name`, so the menu hides it, and nothing listens for `Harm.player`. This is
 unfinished work from the salvaged stash.
 
-### High Canopy overlay never loads (verified)
+### High Canopy can't be entered (verified)
 
-`High Canopy.txt` has **two** `---` separators, with the canopy zone line in
-the third section. `useWorld` keeps only `[map, objects]`, so the zone is
-dropped. The world also can't be entered: a world-door target must match
-`\w+\.txt`, and "High Canopy" has a space.
+A world-door target must match `\w+\.txt`, and "High Canopy" has a space.
+(Its canopy overlay used to sit in an ignored third `---` section; that's
+fixed, and `src/content.test.js` now fails on any extra section.)
 
 ### Player can walk off unwalled map edges (read)
 
@@ -75,6 +75,7 @@ interaction objects in place inside a state updater.
   all JSX through its `jsxImportSource`. It adds weight and render overhead
   for every player.
 - **`yarn lint` can't run** (verified): there's no ESLint config in the repo.
+  `yarn test` does run; see [testing.md](testing.md).
 - **Text files are executable.** `renderTemplate` uses `new Function` and
   sprite action payloads use `eval`. That's fine for first-party files. It
   becomes a code-execution hole if worlds are ever loaded from other people.

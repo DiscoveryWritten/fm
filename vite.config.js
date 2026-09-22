@@ -7,4 +7,7 @@ export default defineConfig({
     jsxImportSource: '@welldone-software/why-did-you-render',
   })],
   base: '/',
+  test: {
+    environment: 'node',
+  },
 })

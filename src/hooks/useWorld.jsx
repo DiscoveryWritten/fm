@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 
 import { classifyObjectSpec, TYPES } from '../interactions';
+import { loadZones } from '../zones';
 
 export default function useWorld({ world }) {
   const [walls, setWalls] = useState({});
@@ -48,21 +49,12 @@ export default function useWorld({ world }) {
 
         return [size, boxGroups];
       }).then(async ([size, boxGroups]) => {
-        const zones = [];
-        await Promise.all(boxGroups.map(async (data) => {
-          const { boxes, dataFile } = data;
-          const overlay = await fetch(`overlays/${dataFile}`).then((res) => res.text());
-          window.dispatchEvent(new CustomEvent('_overlay', { detail: { dataFile, overlay, ...data } }));
-          data.buffer = overlay.replace(/\n+$/, '').split('\n');
-          const maxWidth = Math.max(...data.buffer.map((row) => row.length));
-          if (!boxes.length) {
-            zones.push({ ...data, box: [1, 1, ...size], maxWidth })
-          } else {
-            boxes.forEach((box) => {
-              zones.push({ ...data, box, maxWidth });
-            });
-          }
-        }));
+        const zones = await loadZones(
+          boxGroups,
+          size,
+          (dataFile) => fetch(`overlays/${dataFile}`).then((res) => res.text()),
+          (detail) => window.dispatchEvent(new CustomEvent('_overlay', { detail })),
+        );
         setZones(zones);
       });
   }, [world]);
