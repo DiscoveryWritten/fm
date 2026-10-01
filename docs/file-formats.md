@@ -19,7 +19,8 @@ code unit, so stick to BMP characters (the TI-83 font's glyphs all are).
 <object spec, one per line>
 ```
 
-Only the **first** `---` split matters. The loader keeps `[map, objects]`
+Blank lines before the map art don't count, but spaces at the start of its
+first row do: they're open ground. Only the **first** `---` split matters. The loader keeps `[map, objects]`
 and silently drops any third section (the checks flag one).
 
 Each spec line is tried against these patterns **in this order**, and the first

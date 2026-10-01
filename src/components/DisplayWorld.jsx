@@ -7,6 +7,7 @@ import useSave from '../hooks/useSave';
 import { keyAlias } from '../utils';
 import { TYPES } from '../interactions';
 import { filesAt } from '../world';
+import { palette } from '../paint';
 import useEvent from '../hooks/useEvent';
 
 export default function DisplayWorld({
@@ -67,6 +68,13 @@ export default function DisplayWorld({
     }}));
   }, [battle, origin, startWorld, parsed]);
   useEvent('touch', touchHandler);
+
+  // Which world is up, and what its map can be painted with.
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('World.shown', { detail: {
+      world: startWorld, palette: palette(parsed),
+    }}));
+  }, [startWorld, parsed]);
 
   // Start interaction event
   useEffect(() => {

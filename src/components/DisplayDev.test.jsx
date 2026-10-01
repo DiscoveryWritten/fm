@@ -9,6 +9,8 @@ import { act } from 'react-dom/test-utils';
 import DisplayDev from './DisplayDev';
 import { createEdits, memoryBackend } from '../edits';
 import { setDevMode } from '../dev';
+import { addSource } from '../content';
+import { parseWorld } from '../world';
 import { readScreen, screenLines } from '../testing/screen';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
@@ -48,10 +50,12 @@ describe('DisplayDev', () => {
   it('shows its menu', () => {
     render();
     expect(lines()).toEqual([
-      'DEV', '1:Dev mode:off', '2:Here:tap map', '3:Files', '4:Edited:0',
-      '5:Import files', '6:Last save', '7:Go to start',
+      'DEV', '1:Dev mode:off', '2:Here:tap map', '3:Paint:off', '4:Files', '5:Edited:0',
+      '6:Import files', '7:Last save',
     ]);
     expect(selected()).toBe(1);
+    press('b');                                   // a page down: the list scrolls
+    expect(lines().slice(-1)).toEqual(['8:Go to start']);
   });
 
   it('asks to switch dev mode, and shows it once it is on', () => {
@@ -64,7 +68,7 @@ describe('DisplayDev', () => {
 
   it('browses folders and asks to open a file', () => {
     render();
-    press('n', 'n', 'o');                         // Files
+    press('n', 'n', 'n', 'o');                    // Files
     expect(lines()).toEqual(['FILES', '1:interactions/', '2:world/', '3:game']);
     press('o', 'o');                              // interactions/ → Bard/
     expect(lines()).toEqual(['Bard/', '1:bard']);
@@ -77,8 +81,8 @@ describe('DisplayDev', () => {
   it('marks and lists what has been edited', async () => {
     render();
     await act(() => edits.save('world/Terra Montans.txt', 'edited'));
-    expect(lines()[4]).toBe('4:Edited:1');
-    press('n', 'n', 'n', 'o');
+    expect(lines()[5]).toBe('5:Edited:1');
+    press('n', 'n', 'n', 'n', 'o');
     expect(lines()).toEqual(['EDITED', '1:*world/Terra M']);
   });
 
@@ -110,7 +114,7 @@ describe('DisplayDev', () => {
   it('opens the file picker right inside the key press that asked for it', () => {
     const click = vi.spyOn(HTMLInputElement.prototype, 'click').mockImplementation(() => {});
     render();
-    press('n', 'n', 'n', 'n', 'o');
+    press('n', 'n', 'n', 'n', 'n', 'o');
     expect(click).toHaveBeenCalledTimes(1);
     click.mockRestore();
   });
@@ -120,5 +124,61 @@ describe('DisplayDev', () => {
     press('n', 'o');
     expect(selected()).toBe(1);
     expect(events).toEqual([]);
+  });
+
+  describe('painting', () => {
+    const WORLD = '#####\n#   #\n#####\n---\n#:wall\n';
+    let removes;
+    const map = async () => parseWorld(await edits.source.read('world/T.txt')).map.map((r) => r.join(''));
+    const settle = () => act(() => new Promise((resolve) => setTimeout(resolve, 0)));
+    const tap = async (row, col) => {
+      tapMap({ world: 'T.txt', row, col, glyph: null, files: [] });
+      await settle();
+    };
+
+    beforeEach(() => {
+      // As main.jsx sets it up: the creator's edits in front of the deployed game.
+      removes = [
+        addSource({ name: 'deployed', read: async (path) => path === 'world/T.txt' ? WORLD : null }),
+        addSource(edits.source),
+      ];
+      render();
+      act(() => window.dispatchEvent(new CustomEvent('World.shown', { detail: {
+        world: 'T.txt', palette: [{ glyph: ' ', label: 'ground' }, { glyph: '#', label: 'wall' }],
+      }})));
+      press('n', 'n', 'o');                       // Paint
+    });
+    afterEach(() => removes.forEach((remove) => remove()));
+
+    it("offers the world's palette", () => {
+      expect(lines()).toEqual(['PAINT', '1:Stop painting', '2:Undo:0', '3:   ground', '4: # wall']);  // a space is ground
+    });
+
+    it('paints each tapped cell with the brush, live, and undoes them in turn', async () => {
+      press('n', 'n', 'n', 'o');                  // brush: wall
+      expect(lines()).toEqual(['PAINT #', '1:Stop painting', '2:Undo:0', '3:   ground', '4:># wall']);
+      // Two quick taps: the second paints over the first's result.
+      tapMap({ world: 'T.txt', row: 2, col: 2, glyph: ' ', files: [] });
+      tapMap({ world: 'T.txt', row: 2, col: 4, glyph: ' ', files: [] });
+      await settle();
+      expect(await map()).toEqual(['#####', '## ##', '#####']);
+      expect(lines()[2]).toBe('2:Undo:2');
+
+      press('u', 'u', 'o');                       // Undo
+      await settle();
+      expect(await map()).toEqual(['#####', '##  #', '#####']);
+      press('o');                                 // Undo again
+      await settle();
+      expect(await map()).toEqual(['#####', '#   #', '#####']);
+      expect(lines()[2]).toBe('2:Undo:0');
+    });
+
+    it('stops painting, and taps go back to pointing', async () => {
+      press('n', 'n', 'n', 'o');                  // brush: wall
+      press('u', 'u', 'u', 'o');                  // Stop painting
+      expect(lines()[0]).toBe('PAINT');
+      await tap(2, 2);
+      expect(edits.paths()).toEqual([]);
+    });
   });
 });

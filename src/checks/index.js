@@ -7,6 +7,7 @@ import utils from './utils';
 import buffers from './buffers';
 import log from './log';
 import map from './map';
+import paint from './paint';
 import files from './files';
 import game from './game';
 import stats from './stats';
@@ -17,6 +18,7 @@ export default [
   { name: 'Game setup', register: game },
   { name: 'Stats', register: stats },
   { name: 'Map', register: map },
+  { name: 'Painting', register: paint },
   { name: 'Zones', register: zones },
   { name: 'Object specs', register: interactions },
   { name: 'Buffers', register: buffers },

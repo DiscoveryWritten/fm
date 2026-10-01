@@ -17,9 +17,23 @@ const keyOf = (y, x) => `${y + 1},${x + 1}`;
 //                 (undefined when r,c is off the map)
 //   zoneSpecs:    overlay zone specs, in declaration order
 //   errors:       lines that didn't parse
+// Where the map art sits in a world file: from its first row (blank lines
+// before it don't count) to its last non-blank character.  `rows` are its
+// lines.  A first row may start with spaces: they're part of the map.
+export function mapSection(text) {
+  const split = text.indexOf('---\n');
+  const art = split < 0 ? text : text.slice(0, split);
+  const start = /^(\s*\n)*/.exec(art)[0].length;
+  const body = art.slice(start).trimEnd();
+  return { start, end: start + body.length, rows: body.split('\n') };
+}
+
 export function parseWorld(text) {
-  const [art, objects] = text.trim().split('---\n');
-  const rows = art.trim().split('\n');
+  const { rows } = mapSection(text);
+  const split = text.indexOf('---\n');
+  // Only the section right after the map holds objects; any later one is
+  // ignored (and flagged by the checks).
+  const objects = split < 0 ? '' : text.slice(split + 4).split('---\n')[0].trimEnd();
   const errors = [];
   const specs = (objects || '').split('\n').map((line) => {
     if (!line.length) return false;
