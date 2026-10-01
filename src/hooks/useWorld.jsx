@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { loadZones } from '../zones';
 import { readText } from '../content';
 import { parseWorld } from '../world';
+import useContentVersion from './useContentVersion';
 
 export default function useWorld({ world }) {
   const [walls, setWalls] = useState({});
@@ -10,6 +11,10 @@ export default function useWorld({ world }) {
   const [map, setMap] = useState([]);
   const [interactions, setInteractions] = useState({});
   const [zones, setZones] = useState([]);
+  // An edit to this world or any overlay reloads it in place.
+  const version = useContentVersion((path) => (
+    path === `world/${world}` || path.startsWith('overlays/')
+  ));
 
   useEffect(() => {
     readText(`world/${world}`)
@@ -31,7 +36,7 @@ export default function useWorld({ world }) {
         );
         setZones(zones);
       });
-  }, [world]);
+  }, [world, version]);
 
   return { map, size, walls, interactions, zones };
 }

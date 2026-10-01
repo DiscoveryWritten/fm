@@ -129,3 +129,35 @@ describe('composite agrees with the renderer', () => {
     expect(composite(buffers, width, height)).toEqual(seen({ width, height, buffers }));
   });
 });
+
+describe('ScreenStack touch', () => {
+  it('turns a tap into the cell it landed on, whatever is drawn there', async () => {
+    const { createRoot } = await import('react-dom/client');
+    const { act } = await import('react-dom/test-utils');
+    globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+    const container = document.createElement('div');
+    const root = createRoot(container);
+    act(() => root.render(
+      <ScreenStack screen="world" width={4} height={2} magnification={1} buffers={[
+        { fg: 'black', buffer: ['ab  '] },
+        { bg: 'black', buffer: [['', 'X']] },  // a layer over the 'b'
+      ]} />
+    ));
+    const grid = container.querySelector('.screen').parentElement;
+    // jsdom has no layout: say the screen is 40×20 at (100, 50), so cells are 10×10.
+    grid.getBoundingClientRect = () => ({ left: 100, top: 50, width: 40, height: 20 });
+
+    const touches = [];
+    const onTouch = ({ detail }) => touches.push(detail);
+    window.addEventListener('touch', onTouch);
+    grid.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: 115, clientY: 55 }));
+    grid.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: 139, clientY: 69 }));
+    window.removeEventListener('touch', onTouch);
+    act(() => root.unmount());
+
+    expect(touches).toEqual([
+      { screen: 'world', row: 0, col: 1 },
+      { screen: 'world', row: 1, col: 3 },
+    ]);
+  });
+});

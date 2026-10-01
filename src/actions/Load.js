@@ -10,7 +10,7 @@ function makeItems() {
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
     const [name] = key.split('/', 1);
-    if (name !== 'latest' && !slotNames.includes(name)) {
+    if (name !== 'latest' && !name.startsWith('meta:') && !slotNames.includes(name)) {
       slotNames.push(name);
     }
   }

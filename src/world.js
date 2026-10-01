@@ -153,3 +153,23 @@ export function explore(world, [startY, startX], { canOpen=() => true }={}) {
   }
   return { cells, bumped };
 }
+
+// What's at a 1-based (row, col) of a world, and the game files behind it:
+// the world file itself, an NPC's file, a world door's destination, and any
+// overlay whose zone covers the spot.  For pointing at a cell and editing it.
+export function filesAt({ world, map, interactions, zones=[] }, row, col) {
+  const glyph = map[row - 1]?.[col - 1] ?? null;
+  const here = interactions[`${row},${col}`];
+  const files = [`world/${world}`];
+  if (here?.type === TYPES.NPC) files.push(`interactions/${here.label}/${here.dataFile}`);
+  if (here?.type === TYPES.WORLD) files.push(`world/${here.dataFile}`);
+  zones.forEach(({ box, dataFile }) => {
+    const [r, c, r2, c2] = box;
+    if (row >= r && row <= r2 && col >= c && col <= c2) files.push(`overlays/${dataFile}`);
+  });
+  return {
+    glyph,
+    label: here?.label || null,
+    files: [...new Set(files)].map((path) => ({ path, label: path.split('/').pop() })),
+  };
+}

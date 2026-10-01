@@ -166,6 +166,11 @@ html.compact body {
 .calculator.compact .displays > .screen-slot {
   position: absolute;
 }
+/* The screen in the main slot can be tapped; the pinned one stays a button
+   that brings it up (the pin slot underneath). */
+.calculator.compact .displays > .screen-slot.main {
+  pointer-events: auto;
+}
 .calculator.compact .displays > div[hidden] {
   display: none;
 }

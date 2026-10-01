@@ -354,6 +354,7 @@ export default function DisplayMenu({
 
   return (
     <ScreenStack
+      screen="menu"
       gutter="#c7c7c7"
       width={width}
       height={height}

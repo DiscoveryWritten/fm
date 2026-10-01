@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 import ScreenStack from './ScreenStack';
 import useLocation from '../hooks/useLocation';
@@ -6,6 +6,8 @@ import useInteraction from '../hooks/useInteraction';
 import useSave from '../hooks/useSave';
 import { keyAlias } from '../utils';
 import { TYPES } from '../interactions';
+import { filesAt } from '../world';
+import useEvent from '../hooks/useEvent';
 
 export default function DisplayWorld({
   target,
@@ -42,7 +44,7 @@ export default function DisplayWorld({
   });
 
   const {
-    marker, size, walls, layers, bump, zone, local, origin, position, interactions,
+    marker, size, walls, layers, bump, zone, local, origin, position, interactions, parsed,
   } = useLocation({
     world: startWorld, x: startX, y: startY, width, height,
     possesses,
@@ -53,6 +55,18 @@ export default function DisplayWorld({
     walls, layers, interactions,
     x: position.x, y: position.y, w: width, h: height,
   });
+
+  // A tap on the map says where it landed and what's there.  (Battle view
+  // draws depth rows, not the map, so there's nothing to point at.)
+  const touchHandler = useCallback(({ detail: { screen, row, col } }) => {
+    if (screen !== 'world' || battle) return;
+    const [r, c] = [origin.y + row + 1, origin.x + col + 1];
+    window.dispatchEvent(new CustomEvent('World.touch', { detail: {
+      world: startWorld, row: r, col: c,
+      ...filesAt({ world: startWorld, ...parsed }, r, c),
+    }}));
+  }, [battle, origin, startWorld, parsed]);
+  useEvent('touch', touchHandler);
 
   // Start interaction event
   useEffect(() => {
@@ -234,6 +248,7 @@ export default function DisplayWorld({
 
   return (
     <ScreenStack
+      screen="world"
       gutter="#c7c7c7"
       defaultFg="black"
       width={width}

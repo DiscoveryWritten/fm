@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 
 import usePosition from './usePosition';
 import useWorld from './useWorld';
+import useContentVersion from './useContentVersion';
 import { parseInteraction, TYPES } from '../interactions';
 import { parseDirectionsList } from '../utils';
 import { viewport, viewArea, terrain, depthRows, onPage } from '../world';
@@ -24,6 +25,8 @@ export default function useLocation({
   const [areaTick, setAreaTick] = useState(0);
 
   const { map, size, walls, interactions, zones } = useWorld({ world });
+  // An edit to an NPC's file re-reads the NPCs on screen.
+  const npcVersion = useContentVersion((path) => path.startsWith('interactions/'));
   const { marker, zone, bump, x: posX, y: posY } = usePosition({
     defaultX: x, defaultY: y,
     map, walls, interactions: hydratedInteractions, zones, possesses,
@@ -70,7 +73,7 @@ export default function useLocation({
     ).then((entries) => {
       setHydratedInteractions(Object.fromEntries(entries.filter(([_]) => Boolean(_))));
     });
-  }, [map, walls, originX, originY, width, height, possesses]);
+  }, [map, walls, originX, originY, width, height, possesses, npcVersion]);
 
   // Set 'solid' and 'passable' layers based on walls table
   useEffect(() => {
@@ -156,6 +159,9 @@ export default function useLocation({
     return () => window.removeEventListener('Wait', waitHandler);
   }, [tickArea]);
 
+  // The world as parsed, for pointing at.
+  const parsed = useMemo(() => ({ map, interactions, zones }), [map, interactions, zones]);
+
   return {
     layers: {
       solid,
@@ -171,6 +177,7 @@ export default function useLocation({
     bump,
     zone,
     interactions: hydratedInteractions,
+    parsed,
     position,
     local,
     origin,
