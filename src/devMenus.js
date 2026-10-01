@@ -9,6 +9,9 @@
 //   edited,   // paths with a local edit
 //   touched,  // the last World.touch: { world, row, col, glyph, files }
 //   start,    // { world, row, col }: where the game begins
+//   palette,  // what the world on screen can be painted with: [{ glyph, label }]
+//   brush,    // the glyph a tap paints, or null
+//   undos,    // how many paints can be undone
 // }
 
 const basename = (path) => path.split('/').pop();
@@ -35,7 +38,7 @@ const editItem = (path, edited, label=basename(path)) => ({
 });
 
 export default function devMenu(frame, state) {
-  const { devMode, files, edited, touched, start } = state;
+  const { devMode, files, edited, touched, start, palette=[], brush=null, undos=0 } = state;
 
   switch (frame.id) {
     case 'folder': {
@@ -70,6 +73,21 @@ export default function devMenu(frame, state) {
       };
     }
 
+    case 'paint':
+      return {
+        title: brush === null ? 'PAINT' : `PAINT ${brush}`,
+        // Always the same rows, so nothing moves under the cursor.
+        items: [
+          { name: 'Stop painting', event: 'Dev.brush', detail: { glyph: null } },
+          { name: `Undo:${undos}`, event: 'Dev.undo' },
+          ...palette.map(({ glyph, label }) => ({
+            name: `${glyph === brush ? '>' : ' '}${glyph} ${label}`,
+            event: 'Dev.brush',
+            detail: { glyph },
+          })),
+        ],
+      };
+
     default:
       return {
         title: 'DEV',
@@ -78,6 +96,7 @@ export default function devMenu(frame, state) {
           touched
             ? { name: `Here ${touched.row},${touched.col}`, open: { id: 'here' } }
             : { name: 'Here:tap map' },
+          { name: `Paint:${brush === null ? 'off' : brush}`, open: { id: 'paint' } },
           { name: 'Files', open: { id: 'folder', prefix: '' } },
           { name: `Edited:${edited.length}`, open: { id: 'edited' } },
           { name: 'Import files', event: 'Dev.import' },

@@ -160,7 +160,7 @@ export default function useLocation({
   }, [tickArea]);
 
   // The world as parsed, for pointing at.
-  const parsed = useMemo(() => ({ map, interactions, zones }), [map, interactions, zones]);
+  const parsed = useMemo(() => ({ map, walls, interactions, zones }), [map, walls, interactions, zones]);
 
   return {
     layers: {
