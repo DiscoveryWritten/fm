@@ -4,6 +4,8 @@ import Visualizer from './Visualizer';
 import DisplayStats from './components/DisplayStats';
 import DisplayWorld from './components/DisplayWorld';
 import DisplayMenu from './components/DisplayMenu';
+import DisplayDev from './components/DisplayDev';
+import FileEditor from './components/FileEditor';
 import Analysis from './components/Analysis';
 import Keypad from './components/Keypad';
 import { FONT_WIDTH, FONT_HEIGHT } from './components/Screen';
@@ -13,6 +15,7 @@ import useSave from './hooks/useSave';
 import useEvent from './hooks/useEvent';
 import useMediaQuery from './hooks/useMediaQuery';
 import useCharacterStats from './hooks/useCharacterStats';
+import { setDevMode } from './dev';
 
 
 const VIEWPORT_WIDTH = 16;
@@ -40,7 +43,15 @@ const KEYMAP_MENU = {
   use: 'Enter',
   cancel: 'Backspace',
 };
-const KEYMAPS = { stats: KEYMAP_STATS, world: KEYMAP_WORLD, menu: KEYMAP_MENU };
+const KEYMAP_DEV = {
+  up: 'u',
+  down: 'n',
+  pageUp: 'y',
+  pageDown: 'b',
+  use: 'o',
+  cancel: 'x',
+};
+const KEYMAPS = { stats: KEYMAP_STATS, world: KEYMAP_WORLD, menu: KEYMAP_MENU, dev: KEYMAP_DEV };
 
 // Below this width the game becomes a calculator: one screen at a time, with an
 // on-screen keypad instead of a keyboard.
@@ -68,6 +79,8 @@ export default function App({
   const [battle, setBattle] = useState(null);
 
   const [interaction, setInteraction] = useState(null);
+  const [editing, setEditing] = useState(null);  // a game file path
+  const [showDev, setShowDev] = useState(false);  // on a desktop, where every screen shows
   const [focus, setFocus] = useState('world');
   const compact = useMediaQuery(COMPACT_QUERY);
   const [pinned, setPinned] = useState('stats');  // stats stay in view while you walk
@@ -105,6 +118,7 @@ export default function App({
   useEventDestination({ startWorld, setStartWorld, setStartY, setStartX });
   useEventFocus({ setFocus });
   useCharacterStats();
+  useEventDev({ setEditing });
 
   // Set up world
   useEffect(() => {
@@ -200,7 +214,18 @@ export default function App({
             keyMap={KEYMAP_MENU}
           />
           </div>
+          <div {...(compact || showDev ? place('dev').wrapper : { hidden: true })}>
+          <DisplayDev
+            start={{ world: game.world, row: game.start[0], col: game.start[1] }}
+            width={width}
+            height={height}
+            magnification={place('dev').magnification}
+            keyMap={KEYMAP_DEV}
+            active={compact ? focus === 'dev' : showDev}
+          />
+          </div>
         </div>
+        {editing && <FileEditor path={editing} onClose={() => setEditing(null)} />}
         {compact && (
           <Keypad
             focus={focus} setFocus={setFocus}
@@ -241,6 +266,11 @@ export default function App({
           ))
         )}
       </div> */}
+      {!compact && <label><input
+        type="checkbox"
+        checked={showDev}
+        onChange={(e) => setShowDev(e.target.checked)}
+      />DEV</label>}
       {!compact && <label><input
         type="checkbox"
         id="visualizer-toggle"
@@ -295,6 +325,14 @@ function useEventDestination({ startWorld, setStartWorld, setStartY, setStartX }
   useEvent('destination', destinationHandler);
 }
 
+
+// The DEV screen asks for a file to edit, or to switch dev mode.
+function useEventDev({ setEditing }) {
+  const openHandler = useCallback(({ detail: { path } }) => setEditing(path), []);
+  useEvent('Dev.open', openHandler);
+  const modeHandler = useCallback(({ detail: { on } }) => setDevMode(on), []);
+  useEvent('Dev.mode.set', modeHandler);
+}
 
 // An interaction opens the menu only if it has something to pick; bumping a
 // plain wall shouldn't pull you out of the world.

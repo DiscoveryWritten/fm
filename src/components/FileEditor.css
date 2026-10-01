@@ -1,0 +1,49 @@
+.file-editor {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right))
+    max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+  background-color: #2b2b2b;
+  color: #eee;
+  user-select: text;
+  -webkit-user-select: text;
+}
+.file-editor-path {
+  font-size: 13px;
+  word-break: break-all;
+}
+.file-editor textarea {
+  flex: 1;
+  min-height: 0;
+  padding: 6px;
+  /* 16px keeps iOS from zooming in on focus. */
+  font: 16px/1.25 'ti-83-plus-large', ui-monospace, monospace;
+  color: black;
+  background-color: #c7c7c7;
+  border: none;
+  border-radius: 6px;
+  resize: none;
+  white-space: pre;
+  overflow: auto;
+  user-select: text;
+  -webkit-user-select: text;
+  touch-action: auto;
+}
+.file-editor-actions {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+.file-editor-actions button {
+  min-height: 40px;
+  font-size: 14px;
+}
+.file-editor-status {
+  min-height: 1.2em;
+  font-size: 12px;
+  color: #aaa;
+}

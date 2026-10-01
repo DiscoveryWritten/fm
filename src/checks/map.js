@@ -1,5 +1,5 @@
 import {
-  parseWorld, isOpen, viewport, onPage, viewArea, terrain, depthRows, explore,
+  parseWorld, isOpen, viewport, onPage, viewArea, terrain, depthRows, explore, filesAt,
 } from '../world';
 import { parseGame } from '../game';
 
@@ -149,6 +149,25 @@ export default function register({ describe, it, expect }, content) {
     });
   });
 
+  describe('filesAt (pointing at a spot to edit it)', () => {
+    const world = { world: 'Tiny.txt', ...parseWorld(TINY), zones: [{ box: [1, 1, 3, 7], dataFile: 'rain.txt' }] };
+    const paths = (row, col) => filesAt(world, row, col).files.map(({ path }) => path);
+
+    it("names the world, an NPC's file, and the overlays covering the spot", () => {
+      expect(filesAt(world, 2, 6)).toMatchObject({ glyph: 'β', label: 'Bard' });
+      expect(paths(2, 6)).toEqual(['world/Tiny.txt', 'interactions/Bard/bard.txt', 'overlays/rain.txt']);
+    });
+
+    it('names only the world outside the zones, and for doors and walls', () => {
+      expect(paths(5, 4)).toEqual(['world/Tiny.txt']);  // the door: it lives in the world file
+      expect(filesAt(world, 6, 2)).toMatchObject({ glyph: '.', label: null });
+    });
+
+    it('copes with a spot off the map', () => {
+      expect(filesAt(world, 99, 99)).toMatchObject({ glyph: null, files: [{ path: 'world/Tiny.txt' }] });
+    });
+  });
+
   const game = parseGame(content.text['game.txt']);
 
   describe(`world/${game.world} (the start world)`, () => {
@@ -182,7 +201,17 @@ export default function register({ describe, it, expect }, content) {
       expect(unreachable).toEqual([]);
     });
 
-    it('opens locked rooms with their key, and only with it', () => {
+    it("finds every NPC's file by pointing at it", () => {
+      const missing = Object.keys(world.interactions).flatMap((key) => {
+        const [row, col] = key.split(',').map(Number);
+        return filesAt({ world: game.world, ...world }, row, col).files
+          .filter(({ path }) => !content.exists(path))
+          .map(({ path }) => `${named(key)}: ${path}`);
+      });
+      expect(missing).toEqual([]);
+    });
+
+        it('opens locked rooms with their key, and only with it', () => {
       const lockedDoors = Object.values(world.interactions).filter((i) => i.attributes?.key);
       const entered = lockedDoors.map(({ label, destination: [r, c] }) => ({
         label,

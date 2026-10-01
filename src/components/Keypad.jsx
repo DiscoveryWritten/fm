@@ -2,8 +2,8 @@ import { useRef, useState, useEffect } from 'react';
 
 import './Keypad.css';
 
-export const SCREENS = ['stats', 'world', 'menu'];
-const SCREEN_LABELS = { stats: 'STAT', world: 'WORLD', menu: 'MENU' };
+export const SCREENS = ['stats', 'world', 'menu', 'dev'];
+const SCREEN_LABELS = { stats: 'STAT', world: 'WORLD', menu: 'MENU', dev: 'DEV' };
 
 // Which keymap action each pad zone performs, per focused screen.
 // Screens without an entry for a zone leave it inert.
@@ -11,6 +11,7 @@ const PAD_ACTIONS = {
   stats: { up: 'up', down: 'down', left: 'left', right: 'right', ok: 'select', back: 'cancel' },
   world: { up: 'up', down: 'down', left: 'left', right: 'right' },
   menu: { up: 'up', down: 'down', left: 'pageUp', right: 'pageDown', ok: 'use', back: 'cancel' },
+  dev: { up: 'up', down: 'down', left: 'pageUp', right: 'pageDown', ok: 'use', back: 'cancel' },
 };
 
 const DIGITS = '1234567890'.split('');

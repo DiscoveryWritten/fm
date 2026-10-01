@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { RARITY_COLORS, loadSprite } from '../utils';
+import useContentVersion from './useContentVersion';
 
 const MAP_KIND_SAME = (kind) => kind;
 
@@ -12,6 +13,7 @@ export default function useSpriteLayers({
   const inventoryRef = useRef(inventory);
   const [sprites, setSprites] = useState({});
   const [layers, setLayers] = useState(null);
+  const version = useContentVersion((path) => path.startsWith('equipment/'));
 
   useEffect(() => {
     inventoryRef.current = inventory;
@@ -35,7 +37,7 @@ export default function useSpriteLayers({
       }));
       setSprites(spritesByKind);
     });
-  }, [equipment, positions, offsetLeft, width, height, mapKind]);
+  }, [equipment, positions, offsetLeft, width, height, mapKind, version]);
 
   // Flatten buffers into a single buffer per rarity
   useEffect(() => {

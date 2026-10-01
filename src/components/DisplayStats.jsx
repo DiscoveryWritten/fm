@@ -61,6 +61,7 @@ export default function DisplayStats({
 
   return (
     <ScreenStack
+      screen="stats"
       width={width}
       height={height}
       magnification={magnification}

@@ -5,7 +5,8 @@ import files from 'virtual:content-manifest';
 import checks from '.';
 import { loadContent } from './content';
 import { collect, run } from './runner';
-import { readText } from '../content';
+import { readText, addSource } from '../content';
+import { edits } from '../edits';
 import './page.css';
 
 const root = document.getElementById('checks');
@@ -32,9 +33,13 @@ root.append(
 );
 
 async function main() {
-  // Read files the way the game does, through the same content sources.
+  // Read files the way the game does, through the same content sources,
+  // local edits included (and files that only exist as edits).
+  await edits.load().catch(() => {});
+  addSource(edits.source);
+  const allFiles = [...new Set([...files, ...edits.paths()])].sort();
   let failedLoads = [];
-  const content = await loadContent(files, (file) => (
+  const content = await loadContent(allFiles, (file) => (
     readText(file).catch((error) => {
       failedLoads.push(`${file} (${error.message})`);
       return '';

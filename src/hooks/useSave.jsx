@@ -1,5 +1,7 @@
 import { useEffect } from 'react';
 
+import { isDevMode } from '../dev';
+
 const IGNORE_VALUES = [undefined, null];
 
 function currentSlot(detail) {
@@ -22,6 +24,7 @@ function restore(vars, slot) {
 export default function useSave({...vars}) {
   useEffect(() => {
     const saveHandler = (e) => {
+      if (isDevMode()) return;  // experiments don't overwrite the game
       const slot = currentSlot(e.detail);
       // console.log("* Saving", slot);
       localStorage.setItem('latest', slot);
