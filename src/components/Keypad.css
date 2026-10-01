@@ -27,7 +27,7 @@
    Tap to show, hold to pin into the slot beside the pad. */
 .keypad-screens {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, 1fr) auto;  /* DEV is the small one */
   gap: 8px;
 }
 .keypad .key.soft {
@@ -41,6 +41,10 @@
 .keypad .key.soft.active {
   color: #c7c7c7;
   background-color: #111;
+}
+.keypad .key.soft:last-child {
+  padding: 0 10px;
+  font-size: 11px;
 }
 .keypad .key.soft.pinned {
   outline: 2px dashed #6f8fbf;
