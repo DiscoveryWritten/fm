@@ -117,7 +117,8 @@ const remove = addSource({
 ```
 
 This is where an in-browser store plugs in: player edits, files pulled from
-elsewhere, anything that should win over the deployed copy. The deployed
+elsewhere, anything that should win over the deployed copy. The creator's
+own edits are the first one (`src/edits.js`, see [editor.md](editor.md)). The deployed
 files stay the clean fallback. Because `/tests/` reads through the same
 sources, it checks exactly what the game would load, local edits included.
 `src/checks/game.js` pins the ordering: the newest source first, falling

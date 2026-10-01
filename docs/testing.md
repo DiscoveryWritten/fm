@@ -38,7 +38,7 @@ holds each of that runner's matchers to Vitest's verdicts.
 | -- | -- |
 | `checks/files.js` | **Every file in the game**: `game.txt` parses and its start world exists; each world line parses, there's exactly one `---`, referenced overlay/NPC/world/equipment files exist, and coordinates are on the map |
 | `checks/game.js` | `game.txt` parsing, and content sources: the newest is asked first, falls through, and can be removed |
-| `checks/map.js` | World parsing, walkability, viewport paging (including a page's last row and column), terrain layers, battle depth rows, and exploring on foot. On the game's start world (from `game.txt`): it parses, the spawn is open ground, it's walled in, **every NPC and door can be reached from the spawn**, and locked rooms open only with their key |
+| `checks/map.js` | `filesAt` (what's at a spot, for editing), and on the start world, that pointing at every NPC finds its file. World parsing, walkability, viewport paging (including a page's last row and column), terrain layers, battle depth rows, and exploring on foot. On the game's start world (from `game.txt`): it parses, the spawn is open ground, it's walled in, **every NPC and door can be reached from the spawn**, and locked rooms open only with their key |
 | `checks/zones.js` | Zone loading keeps declaration order however the fetches finish (the weather bug), last-declared-wins lookup, inclusive 1-based boxes, weather roll ranges |
 | `checks/interactions.js` | The object-spec grammar for every line type, NPC sections and `?reactions`, Buy filtering, locked doors, sprite actions |
 | `checks/buffers.js` | Offsets, placing, stacking and clipping, as plain text |
@@ -46,10 +46,16 @@ holds each of that runner's matchers to Vitest's verdicts.
 | `checks/utils.js` | Text wrapping and scrolling (`bufferize`), direction lists, prices, equipment grouping, templates |
 | `checks/stats.js` | The `Stats` section, stat tokens, and dialogue markup: where each kind of phrase ends, set/add/highlight-only, paragraphs |
 | `checks/text.js` | The menu's text view: wraps exactly like `bufferize` when nothing is marked, highlights exactly the phrase, two colors, scrolling, title rows |
-| `components/ScreenStack.test.jsx` | Vitest only. What the player sees when buffers stack, and that `composite` matches the real renderer cell for cell |
+| `components/ScreenStack.test.jsx` | Vitest only. What the player sees when buffers stack, that `composite` matches the real renderer cell for cell, and that a tap becomes the cell it landed on |
 | `components/DisplayMenu.test.jsx` | Vitest only. The real menu, driven by keys and read back off the screen: the ambient menu, a Shout reaction opening at its first line with `HEY!` highlighted, the stat change it reports, and a new menu opening at its first option |
 | `hooks/useSubDisplayLog.test.jsx` | Vitest only. The Log tab driven by key events, as the game drives it |
 | `hooks/useInteraction.test.jsx` | Vitest only. Bump targeting, and letting go when a bumped NPC walks away (this crashed the game) |
+| `edits.test.js` | Vitest only. Local edits mask the deployed file until reverted, announce each change, hold Blobs, and are kept for next time |
+| `devMenus.test.js` | Vitest only. The DEV menus as data: folders, opening files, dev mode, the tapped spot, where imports land |
+| `components/DisplayDev.test.jsx` | Vitest only. The DEV screen by its keys and by map taps: browsing, the Here menu in dev mode, the file picker opening inside the key press, keys ignored while hidden |
+| `components/FileEditor.test.jsx` | Vitest only. Open, save (the game hears about it), revert, typing kept from the game's keys |
+| `hooks/useWorld.test.jsx` | Vitest only. Saving an edit to the world reloads it in place, and another world's edit doesn't |
+| `hooks/useSave.test.jsx` | Vitest only. Saves, and doesn't in dev mode; dev mode stays out of save slots |
 | `hooks/useCharacterStats.test.jsx` | Vitest only. Stat changes from `Stats.change` events: first time only, map-line stats as the base, per character, saved with the game |
 
 ## How to use them

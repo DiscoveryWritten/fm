@@ -14,7 +14,8 @@
 4. `App` renders `DisplayStats`, `DisplayWorld` and `DisplayMenu` side by side,
    then the hidden `Visualizer` debug panel.
 
-Before any of that, `main.jsx` reads the game's `game.txt` (see
+Before any of that, `main.jsx` loads the creator's local edits (see
+[editor.md](editor.md)) and puts them in front of the network, then reads the game's `game.txt` (see
 [games.md](games.md)) and passes it to `App` as `game`: the title, start world,
 1-based spawn and opening log. `App` subtracts 1 from the spawn, because the
 engine works 0-based internally and the text files are 1-based. Every game
@@ -120,9 +121,10 @@ toolbars can't push it around, and it respects the safe-area insets
 
 ### Keypad
 
-- **Soft keys** (STAT / WORLD / MENU): tap to focus that screen. Hold to pin
+- **Soft keys** (STAT / WORLD / MENU / DEV): tap to focus that screen. Hold to pin
   or unpin it into the slot left of the pad. Tapping the pin slot focuses the
   pinned screen, which then moves up to the main slot until focus leaves it.
+  DEV is the creator's screen ([editor.md](editor.md)).
   STAT starts pinned, so the stats show alongside the world from the start.
 - **Donut:** four arc buttons around a sunken **ENTER** well, with a small
   **CLR** at the 45° top-right.
@@ -291,6 +293,8 @@ Keys written per slot: `magnification`, `width`, `height`, `startWorld`,
 `player/inventory`, `player/equipment`, `player/log`, `logLength`,
 `logScrollOffset`, `logText` and `logTextOffset`.
 
+In dev mode ([editor.md](editor.md)) `Save` writes nothing.
+
 `DisplayWorld` has a second, write-only `useSave` for the same world keys,
 because `App`'s copy lost a save-before-remount race (see its comment).
 
@@ -317,6 +321,13 @@ All of these are dispatched on `window`.
 | `<Action>.player` | any other capitalized sprite attribute | nothing | the action |
 | `Harm.player` | never shown (item has no `name`) | nothing | |
 | `world`, `_overlay`, `_interaction`, `_item`, `origin` | loaders | Visualizer (debug only) | raw text and parse results |
+| `touch` | ScreenStack (a tap on a cell) | DisplayWorld | `{screen, row, col}`, 0-based cell |
+| `World.touch` | DisplayWorld | DisplayDev | `{world, row, col, glyph, label, files}`, 1-based map spot |
+| `Content.changed` | `edits.save` / `edits.revert` | `useContentVersion` loaders, DisplayDev, main.jsx (`game.txt`) | `{path}` |
+| `Dev.open` | DEV menu | App → file editor | `{path}` |
+| `Dev.mode.set` | DEV menu | App → `setDevMode` | `{on}` |
+| `Dev.mode` | `setDevMode` | `useDevMode` | `{on}` |
+| `Dev.import` | DEV menu | DisplayDev → file picker | |
 
 ## The dormant classifier
 
