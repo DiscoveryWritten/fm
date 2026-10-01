@@ -323,6 +323,9 @@ All of these are dispatched on `window`.
 | `world`, `_overlay`, `_interaction`, `_item`, `origin` | loaders | Visualizer (debug only) | raw text and parse results |
 | `touch` | ScreenStack (a tap on a cell) | DisplayWorld | `{screen, row, col}`, 0-based cell |
 | `World.touch` | DisplayWorld | DisplayDev | `{world, row, col, glyph, label, files}`, 1-based map spot |
+| `World.shown` | DisplayWorld, when the world loads or changes | DisplayDev | `{world, palette}` |
+| `Dev.brush` | DEV paint menu | DisplayDev | `{glyph}`, or `null` to stop painting |
+| `Dev.undo` | DEV paint menu | DisplayDev | |
 | `Content.changed` | `edits.save` / `edits.revert` | `useContentVersion` loaders, DisplayDev, main.jsx (`game.txt`) | `{path}` |
 | `Dev.open` | DEV menu | App → file editor | `{path}` |
 | `Dev.mode.set` | DEV menu | App → `setDevMode` | `{on}` |

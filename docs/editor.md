@@ -18,6 +18,7 @@ pinned beside the pad while the world is up is the main way to work.
 | -- | -- |
 | **Dev mode** | Pauses saves (see below). Kept outside every save slot (`localStorage["meta:dev"]`). |
 | **Here** | What's at the last spot you tapped on the map: the world file, an NPC's file, a world door's destination, the overlays covering it, and **Jump here**. In dev mode a tap brings this up by itself. |
+| **Paint** | Pick a brush from the world's glyphs, then tap the map to paint (see below). |
 | **Files** | Every game file, by folder. `*` marks a local edit. Choosing one opens it. |
 | **Edited** | Just the files with a local edit. |
 | **Import files** | Pick files from the device. Each lands on the game file with its name (or its path, when a whole folder is picked); anything else becomes a new file. Large or binary files are kept as they are, as Blobs. |
@@ -47,6 +48,26 @@ again:
 
 Each one is a `useContentVersion(matches)` in that loader's effect
 dependencies. A new loader opts in the same way.
+
+### Painting the map
+
+**Paint** lists what the world on screen can be painted with: open ground,
+its declared sprites with their labels (`█ wall`, `| ~counter`), then any
+other glyph its art uses. Choosing one makes it the brush (`>` marks it, and
+the title shows it). While there's a brush, a tap on the map paints that
+cell instead of pointing at it, in dev mode or not. **Undo** steps back one
+paint at a time, and **Stop painting** puts the brush down. The rows stay
+put either way, so nothing moves under the cursor.
+
+Each paint is an ordinary local edit. It reads the world file as the game
+would, changes that one character of the map art (`paintCell` in
+`src/paint.js`), and saves it, so the world redraws at once. Everything else
+in the file, including the spec lines and blank lines, is left exactly as
+it was. Painting past the edge grows the map, padding with spaces. Quick
+taps queue, so each lands on the result of the one before.
+
+The world announces what it can be painted with in a `World.shown` event,
+whenever it loads or changes.
 
 ### Where edits live
 
@@ -103,15 +124,14 @@ how highlights work), but each new color costs a full grid of nodes, so it's
 spent sparingly. A renderer that draws a cell once, with its color, would
 remove the cost and the reason to flatten.
 
-### Editing a grid on the grid
+### Painting more than one cell at a time
 
-Text is edited in a plain textarea because a phone's keyboard needs one. Map
-art is a grid, though, and could be edited where it's drawn: pick a glyph
-in DEV, tap cells on the map to paint it. The pieces are there (`touch`,
-`World.touch`, live reload). What's missing is rewriting one character of the
-map section without disturbing the rest of the file. That's easy for the map
-art, harder for the spec lines below `---`. **This is the most reachable
-next step.**
+Painting is one tap, one cell. Dragging a line, filling an area, or
+stamping a block would need the screen to report a drag across cells, not
+just taps, and the undo to group them. Painting over an NPC's or a door's
+cell changes the art, but the object is still declared at that spot in the
+spec lines below `---`. Moving or adding objects means editing those lines,
+which is the next step after painting.
 
 ### Editing big, schemaless values
 

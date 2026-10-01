@@ -44,6 +44,7 @@ holds each of that runner's matchers to Vitest's verdicts.
 | `checks/buffers.js` | Offsets, placing, stacking and clipping, as plain text |
 | `checks/log.js` | The Log view at its real size and at others: list, highlight, reading, text scroll, rewrapping |
 | `checks/utils.js` | Text wrapping and scrolling (`bufferize`), direction lists, prices, equipment grouping, templates |
+| `checks/paint.js` | Painting one cell changes only that character of the file, grows the map past its edge, keeps open ground at the start of the first row; the palette; and painting the start world's spawn with what it holds changes nothing |
 | `checks/stats.js` | The `Stats` section, stat tokens, and dialogue markup: where each kind of phrase ends, set/add/highlight-only, paragraphs |
 | `checks/text.js` | The menu's text view: wraps exactly like `bufferize` when nothing is marked, highlights exactly the phrase, two colors, scrolling, title rows |
 | `components/ScreenStack.test.jsx` | Vitest only. What the player sees when buffers stack, that `composite` matches the real renderer cell for cell, and that a tap becomes the cell it landed on |
@@ -52,7 +53,7 @@ holds each of that runner's matchers to Vitest's verdicts.
 | `hooks/useInteraction.test.jsx` | Vitest only. Bump targeting, and letting go when a bumped NPC walks away (this crashed the game) |
 | `edits.test.js` | Vitest only. Local edits mask the deployed file until reverted, announce each change, hold Blobs, and are kept for next time |
 | `devMenus.test.js` | Vitest only. The DEV menus as data: folders, opening files, dev mode, the tapped spot, where imports land |
-| `components/DisplayDev.test.jsx` | Vitest only. The DEV screen by its keys and by map taps: browsing, the Here menu in dev mode, the file picker opening inside the key press, keys ignored while hidden |
+| `components/DisplayDev.test.jsx` | Vitest only. The DEV screen by its keys and by map taps: browsing, the Here menu in dev mode, the file picker opening inside the key press, keys ignored while hidden, and painting: the palette, quick taps each landing, undo, stopping |
 | `components/FileEditor.test.jsx` | Vitest only. Open, save (the game hears about it), revert, typing kept from the game's keys |
 | `hooks/useWorld.test.jsx` | Vitest only. Saving an edit to the world reloads it in place, and another world's edit doesn't |
 | `hooks/useSave.test.jsx` | Vitest only. Saves, and doesn't in dev mode; dev mode stays out of save slots |
